@@ -13,6 +13,7 @@ import MonitorView from './components/Monitor/MonitorView'
 import DashboardView from './components/Dashboard/DashboardView'
 import SftpView from './components/Sftp/SftpView'
 import TunnelsView from './components/Tunnels/TunnelsView'
+import LogsView from './components/Logs/LogsView'
 import ConnectionForm from './components/ConnectionForm'
 import SettingsPanel from './components/SettingsPanel'
 
@@ -157,6 +158,7 @@ export default function App(): JSX.Element {
             {view === 'monitor' && <MonitorView />}
             {view === 'sftp' && <SftpView />}
             {view === 'tunnels' && <TunnelsView />}
+            {view === 'logs' && <LogsView />}
             <AnimatePresence>
               {editor.mode !== 'closed' && <ConnectionForm key="editor" />}
             </AnimatePresence>

@@ -11,7 +11,9 @@ import type {
   SftpEntry,
   SftpStatusEvent,
   TunnelConfig,
-  TunnelStatusEvent
+  TunnelStatusEvent,
+  LogDataEvent,
+  LogStatusEvent
 } from '../shared/types'
 
 interface UpsertInput {
@@ -131,6 +133,23 @@ const api = {
       const listener = (_: unknown, e: TunnelStatusEvent): void => cb(e)
       ipcRenderer.on('tunnel:status', listener)
       return () => ipcRenderer.removeListener('tunnel:status', listener)
+    }
+  },
+  logs: {
+    start: (input: ConnectInput, command: string): Promise<IpcResult<{ logId: string }>> =>
+      ipcRenderer.invoke('logs:start', { input, command }),
+    stop: (logId: string): Promise<IpcResult<boolean>> => ipcRenderer.invoke('logs:stop', logId),
+    export: (content: string, defaultName: string): Promise<IpcResult<boolean>> =>
+      ipcRenderer.invoke('logs:export', { content, defaultName }),
+    onData: (cb: (e: LogDataEvent) => void): (() => void) => {
+      const listener = (_: unknown, e: LogDataEvent): void => cb(e)
+      ipcRenderer.on('logs:data', listener)
+      return () => ipcRenderer.removeListener('logs:data', listener)
+    },
+    onStatus: (cb: (e: LogStatusEvent) => void): (() => void) => {
+      const listener = (_: unknown, e: LogStatusEvent): void => cb(e)
+      ipcRenderer.on('logs:status', listener)
+      return () => ipcRenderer.removeListener('logs:status', listener)
     }
   }
 }

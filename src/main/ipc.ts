@@ -1,5 +1,5 @@
 import { ipcMain, dialog, BrowserWindow, type IpcMainEvent } from 'electron'
-import { readFile } from 'fs/promises'
+import { readFile, writeFile } from 'fs/promises'
 import type { IpcResult } from '../shared/types'
 import { basename } from 'path'
 import {
@@ -35,6 +35,7 @@ import {
   closeSftp
 } from './sftp'
 import { startTunnel, stopTunnel, isActive } from './tunnels'
+import { startLog, stopLog } from './logs'
 
 function ok<T>(data: T): IpcResult<T> {
   return { ok: true, data }
@@ -350,5 +351,49 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('tunnel:stop', (_e, id: string) => {
     stopTunnel(id)
     return ok(true)
+  })
+
+  // ---- Live Logs ----
+  ipcMain.handle('logs:start', (_e, p: { input: ConnectInput; command: string }) => {
+    try {
+      const logId = startLog(
+        withStoredSecrets(p.input),
+        p.command,
+        (id, chunk) => {
+          const win = getWindow()
+          if (win && !win.isDestroyed()) win.webContents.send('logs:data', { logId: id, chunk })
+        },
+        (id, status, message) => {
+          const win = getWindow()
+          if (win && !win.isDestroyed())
+            win.webContents.send('logs:status', { logId: id, status, message })
+        }
+      )
+      return ok({ logId })
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('logs:stop', (_e, logId: string) => {
+    stopLog(logId)
+    return ok(true)
+  })
+
+  ipcMain.handle('logs:export', async (_e, p: { content: string; defaultName: string }) => {
+    try {
+      const win = getWindow()
+      if (!win) return fail('Finestra non disponibile')
+      const res = await dialog.showSaveDialog(win, {
+        title: 'Esporta log',
+        defaultPath: p.defaultName,
+        filters: [{ name: 'Log', extensions: ['log', 'txt'] }]
+      })
+      if (res.canceled || !res.filePath) return ok(false)
+      await writeFile(res.filePath, p.content, 'utf8')
+      return ok(true)
+    } catch (e) {
+      return fail(e)
+    }
   })
 }

@@ -22,15 +22,25 @@ export default function Sidebar(): JSX.Element {
     setMonitorTarget,
     sftpTargetId,
     setSftpTarget,
+    logsTargetId,
+    setLogsTarget,
     sidebarSection,
     setSidebarSection
   } = useStore()
   const section = sidebarSection
   // Connessione "selezionata" e label dell'azione in base alla vista.
-  const selectedId = view === 'monitor' ? monitorTargetId : view === 'sftp' ? sftpTargetId : undefined
-  const actionLabel = view === 'monitor' ? 'monitora' : view === 'sftp' ? 'apri' : 'collega'
+  const selectedId =
+    view === 'monitor'
+      ? monitorTargetId
+      : view === 'sftp'
+        ? sftpTargetId
+        : view === 'logs'
+          ? logsTargetId
+          : undefined
+  const actionLabel =
+    view === 'monitor' ? 'monitora' : view === 'sftp' ? 'apri' : view === 'logs' ? 'log' : 'collega'
   const headerLabel =
-    view === 'monitor' ? 'scegli un server' : view === 'sftp' ? 'scegli un server' : 'le tue destinazioni'
+    view === 'terminal' ? 'le tue destinazioni' : 'scegli un server'
 
   const connect = (c: Connection): void => {
     const input: ConnectInput = {
@@ -52,6 +62,7 @@ export default function Sidebar(): JSX.Element {
   const primaryAction = (c: Connection): void => {
     if (view === 'monitor') setMonitorTarget(c.id)
     else if (view === 'sftp') setSftpTarget(c.id)
+    else if (view === 'logs') setLogsTarget(c.id)
     else connect(c)
   }
 

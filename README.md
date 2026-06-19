@@ -25,11 +25,12 @@ ssh -i effatta.pem effatta@52.166.113.244
   Puoi anche definire un **comando all'avvio** eseguito automaticamente.
 - **Parse rapido**: incolla una riga `ssh -i chiave.pem utente@host -p 2222` nel
   form e i campi si compilano da soli.
-- **Cinque sezioni** dalla barra di navigazione a sinistra: **Home** (panoramica
+- **Sei sezioni** dalla barra di navigazione a sinistra: **Home** (panoramica
   di tutte le connessioni con ping di raggiungibilità live e azioni rapide),
   **Terminali**, **Monitor**, **File** (gestore SFTP con drag&drop, download,
-  crea/rinomina/elimina) e **Tunnel** (port forwarding locale/remoto con
-  interruttori on/off e stato).
+  crea file/cartella, editor remoto), **Tunnel** (port forwarding locale/remoto)
+  e **Logs** (stream `tail -f` in tempo reale, indipendenti per sessione, con
+  filtro per testo/livello, ricerca, pausa, svuota ed esporta).
 - **Monitoraggio server**: apre una connessione SSH dedicata e mostra in tempo reale —
   con polling ogni 2,5s — uso CPU (anello + storico), RAM e swap, carico medio
   (1/5/15m), dischi e i processi top per CPU. Legge `/proc` via `exec`, senza

@@ -169,3 +169,18 @@ export interface TunnelStatusEvent {
   status: TunnelStatus
   message?: string
 }
+
+// ---- Live Logs ----
+
+export type LogStatus = 'connecting' | 'streaming' | 'error' | 'closed'
+
+export interface LogDataEvent {
+  logId: string
+  chunk: string
+}
+
+export interface LogStatusEvent {
+  logId: string
+  status: LogStatus
+  message?: string
+}

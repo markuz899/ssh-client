@@ -5,6 +5,7 @@ import { closeAll } from './ssh'
 import { closeAllMonitors } from './monitor'
 import { closeAllSftp } from './sftp'
 import { closeAllTunnels } from './tunnels'
+import { closeAllLogs } from './logs'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -55,6 +56,7 @@ function shutdownAll(): void {
   closeAllMonitors()
   closeAllSftp()
   closeAllTunnels()
+  closeAllLogs()
 }
 
 app.on('window-all-closed', () => {

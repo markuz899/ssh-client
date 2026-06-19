@@ -13,7 +13,8 @@ const ITEMS: Item[] = [
   { view: 'terminal', glyph: '⌁', label: 'Terminali' },
   { view: 'monitor', glyph: '◍', label: 'Monitor' },
   { view: 'sftp', glyph: '⇅', label: 'File' },
-  { view: 'tunnels', glyph: '⇄', label: 'Tunnel' }
+  { view: 'tunnels', glyph: '⇄', label: 'Tunnel' },
+  { view: 'logs', glyph: '≣', label: 'Logs' }
 ]
 
 export default function NavRail(): JSX.Element {

@@ -17,7 +17,7 @@ import ConnectionForm from './components/ConnectionForm'
 import SettingsPanel from './components/SettingsPanel'
 
 export default function App(): JSX.Element {
-  const { editor, view, sidebarCollapsed, loadConnections, loadGlobalCommands, setEncryption, updateTab } =
+  const { editor, view, sidebarCollapsed, loadConnections, loadGlobalCommands, setEncryption, updatePane } =
     useStore()
   const accentHex = useSettings((s) => s.accent)
   const settingsOpen = useSettings((s) => s.open)
@@ -34,15 +34,15 @@ export default function App(): JSX.Element {
     })
 
     const offStatus = onStatus((e) => {
-      const { tabs, connections } = useStore.getState()
-      const tab = tabs.find((t) => t.sessionId === e.sessionId)
-      if (!tab) return
-      updateTab(tab.id, { status: e.status, errorMessage: e.message })
+      const { panes, connections } = useStore.getState()
+      const pane = Object.values(panes).find((p) => p.sessionId === e.sessionId)
+      if (!pane) return
+      updatePane(pane.id, { status: e.status, errorMessage: e.message })
 
       // Invia il comando d'avvio una sola volta, quando la shell è pronta.
       if (e.status === 'ready' && !startupSent.current.has(e.sessionId)) {
         startupSent.current.add(e.sessionId)
-        const conn = connections.find((c) => c.id === tab.connectionId)
+        const conn = connections.find((c) => c.id === pane.connectionId)
         if (conn?.startupCommand) {
           window.phosphor.session.write(e.sessionId, conn.startupCommand + '\r')
         }
@@ -81,6 +81,17 @@ export default function App(): JSX.Element {
         case 'duplicateTab':
           if (st.activeTabId) st.duplicateTab(st.activeTabId)
           break
+        case 'splitRight':
+        case 'splitDown': {
+          const tab = st.tabs.find((t) => t.id === st.activeTabId)
+          if (tab) st.splitPane(tab.id, tab.activePaneId, id === 'splitRight' ? 'row' : 'col')
+          break
+        }
+        case 'closePane': {
+          const tab = st.tabs.find((t) => t.id === st.activeTabId)
+          if (tab) st.closePane(tab.id, tab.activePaneId)
+          break
+        }
         case 'nextTab':
           st.cycleTab(1)
           break

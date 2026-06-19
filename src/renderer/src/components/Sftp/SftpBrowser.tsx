@@ -52,6 +52,7 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
   const [loading, setLoading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [newFolder, setNewFolder] = useState<string | null>(null)
+  const [newFile, setNewFile] = useState<string | null>(null)
   const [editingPath, setEditingPath] = useState<string | null>(null)
   const [editFile, setEditFile] = useState<{ path: string; name: string } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -176,6 +177,31 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
     setNewFolder(null)
     if (!res.ok) setError(res.error)
     else refresh()
+  }
+
+  const createFile = async (): Promise<void> => {
+    const id = sftpId.current
+    const name = newFile?.trim()
+    if (!id || !name) {
+      setNewFile(null)
+      return
+    }
+    if (entries.some((e) => e.name === name)) {
+      setError('Esiste già un elemento con questo nome.')
+      setNewFile(null)
+      return
+    }
+    const filePath = joinPath(cwd, name)
+    setBusy(`Creo ${name}…`)
+    const res = await window.phosphor.sftp.writeFile(id, filePath, '')
+    setBusy(null)
+    setNewFile(null)
+    if (!res.ok) {
+      setError(res.error)
+      return
+    }
+    await refresh()
+    setEditFile({ path: filePath, name }) // apri subito il nuovo file nell'editor
   }
 
   const onDrop = async (ev: React.DragEvent): Promise<void> => {
@@ -317,7 +343,19 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
           ⌖
         </button>
         <button
-          onClick={() => setNewFolder('')}
+          onClick={() => {
+            setNewFile('')
+            setNewFolder(null)
+          }}
+          className="rounded-md border border-line px-2.5 py-1 font-mono text-[11px] text-ink-dim transition hover:border-phosphor/30 hover:text-phosphor"
+        >
+          ＋ file
+        </button>
+        <button
+          onClick={() => {
+            setNewFolder('')
+            setNewFile(null)
+          }}
           className="rounded-md border border-line px-2.5 py-1 font-mono text-[11px] text-ink-dim transition hover:border-phosphor/30 hover:text-phosphor"
         >
           ＋ cartella
@@ -348,7 +386,7 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
       <div className="flex-1 overflow-y-auto">
         {newFolder !== null && (
           <div className="flex items-center gap-2 border-b border-line bg-elev/40 px-4 py-2">
-            <span className="text-phosphor">📁</span>
+            <span className="text-amber">📁</span>
             <input
               autoFocus
               value={newFolder}
@@ -364,6 +402,29 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
               crea
             </button>
             <button onClick={() => setNewFolder(null)} className="font-mono text-[11px] text-ink-dim">
+              ×
+            </button>
+          </div>
+        )}
+
+        {newFile !== null && (
+          <div className="flex items-center gap-2 border-b border-line bg-elev/40 px-4 py-2">
+            <span className="text-ink-dim">📄</span>
+            <input
+              autoFocus
+              value={newFile}
+              onChange={(e) => setNewFile(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') createFile()
+                if (e.key === 'Escape') setNewFile(null)
+              }}
+              placeholder="nome file (es. note.txt)"
+              className="flex-1 rounded-md border border-line bg-void/60 px-2.5 py-1 font-mono text-[12px] text-ink outline-none focus:border-phosphor/50"
+            />
+            <button onClick={createFile} className="font-mono text-[11px] text-phosphor">
+              crea e apri
+            </button>
+            <button onClick={() => setNewFile(null)} className="font-mono text-[11px] text-ink-dim">
               ×
             </button>
           </div>

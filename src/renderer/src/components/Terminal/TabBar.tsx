@@ -1,5 +1,7 @@
 import { Reorder, motion } from 'framer-motion'
 import { useStore } from '../../lib/store'
+import { collectPaneIds } from '../../lib/layout'
+import LayoutsMenu from './LayoutsMenu'
 import type { SessionStatus } from '@shared/types'
 
 /** LED di stato colorato col colore della connessione. */
@@ -27,7 +29,7 @@ function Led({ color, status }: { color: string; status: SessionStatus }): JSX.E
 }
 
 export default function TabBar(): JSX.Element {
-  const { tabs, activeTabId, connections, setActiveTab, removeTab, setTabsOrder, duplicateTab } =
+  const { tabs, activeTabId, panes, connections, setActiveTab, removeTab, setTabsOrder, duplicateTab } =
     useStore()
 
   return (
@@ -41,7 +43,9 @@ export default function TabBar(): JSX.Element {
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId
-          const color = connections.find((c) => c.id === tab.connectionId)?.color ?? '#5EF6FF'
+          const activePane = panes[tab.activePaneId]
+          const color = connections.find((c) => c.id === activePane?.connectionId)?.color ?? '#5EF6FF'
+          const paneCount = collectPaneIds(tab.layout).length
           return (
             <Reorder.Item
               key={tab.id}
@@ -61,8 +65,13 @@ export default function TabBar(): JSX.Element {
                   className="absolute inset-x-0 -bottom-px h-px bg-phosphor shadow-[0_0_8px_rgb(var(--c-accent))]"
                 />
               )}
-              <Led color={color} status={tab.status} />
+              <Led color={color} status={activePane?.status ?? 'closed'} />
               <span className="flex-1 truncate font-mono text-xs">{tab.title}</span>
+              {paneCount > 1 && (
+                <span className="shrink-0 rounded border border-line px-1 font-mono text-[9px] text-ink-dim">
+                  ⊞{paneCount}
+                </span>
+              )}
               <button
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
@@ -89,6 +98,9 @@ export default function TabBar(): JSX.Element {
           )
         })}
       </Reorder.Group>
+      <div className="no-drag flex items-center pb-2 pl-1">
+        <LayoutsMenu />
+      </div>
     </div>
   )
 }

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import DecryptedText from '../ui/DecryptedText'
-import type { Tab } from '../../lib/store'
+import type { Pane } from '../../lib/store'
 
 interface Props {
-  tab: Tab
+  pane: Pane
   onRetry: () => void
   onClose: () => void
 }
@@ -23,11 +23,11 @@ const STEPS = [
  * È l'elemento "firma" dell'app: radar pulsante, host in DecryptedText e una
  * sequenza di passi che si accendono uno alla volta. Sparisce a 'ready'.
  */
-export default function ConnectingOverlay({ tab, onRetry, onClose }: Props): JSX.Element | null {
+export default function ConnectingOverlay({ pane, onRetry, onClose }: Props): JSX.Element | null {
   const phase: 'busy' | 'error' | 'done' =
-    tab.status === 'error'
+    pane.status === 'error'
       ? 'error'
-      : tab.status === 'ready'
+      : pane.status === 'ready'
         ? 'done'
         : 'busy'
 
@@ -37,12 +37,12 @@ export default function ConnectingOverlay({ tab, onRetry, onClose }: Props): JSX
     const id = setInterval(() => {
       setStep((s) => {
         // Avanza fino a 'autenticazione' e lì resta in attesa dell'esito.
-        const cap = tab.status === 'authenticating' ? STEPS.length - 1 : STEPS.length - 2
+        const cap = pane.status === 'authenticating' ? STEPS.length - 1 : STEPS.length - 2
         return Math.min(s + 1, cap)
       })
     }, 480)
     return () => clearInterval(id)
-  }, [phase, tab.status])
+  }, [phase, pane.status])
 
   const visible = phase !== 'done'
 
@@ -104,11 +104,11 @@ export default function ConnectingOverlay({ tab, onRetry, onClose }: Props): JSX
               {phase === 'error' ? 'connessione interrotta' : 'collegamento in corso'}
             </div>
             <div className="mb-6 text-center font-mono text-lg text-ink">
-              <span className="text-ink-dim">{tab.username}@</span>
+              <span className="text-ink-dim">{pane.username}@</span>
               <DecryptedText
-                text={tab.host}
+                text={pane.host}
                 className={phase === 'error' ? 'text-danger' : 'text-phosphor text-glow'}
-                trigger={tab.status}
+                trigger={pane.status}
               />
             </div>
 
@@ -159,7 +159,7 @@ export default function ConnectingOverlay({ tab, onRetry, onClose }: Props): JSX
                 className="w-full max-w-sm text-center"
               >
                 <p className="mb-5 font-mono text-[13px] leading-relaxed text-danger/90">
-                  {tab.errorMessage ?? 'Errore sconosciuto.'}
+                  {pane.errorMessage ?? 'Errore sconosciuto.'}
                 </p>
                 <div className="flex justify-center gap-3">
                   <button

@@ -15,11 +15,13 @@ interface Draft {
 const EMPTY: Draft = { label: '', command: '', runOnSend: true }
 
 export default function GlobalCommands(): JSX.Element {
-  const { globalCommands, saveGlobalCommands, injectToActive, tabs, activeTabId, view } = useStore()
+  const { globalCommands, saveGlobalCommands, injectToActive, tabs, activeTabId, panes, view } =
+    useStore()
   const [draft, setDraft] = useState<Draft | null>(null)
 
   const activeTab = tabs.find((t) => t.id === activeTabId)
-  const canRun = view === 'terminal' && activeTab?.status === 'ready'
+  const activePane = activeTab ? panes[activeTab.activePaneId] : undefined
+  const canRun = view === 'terminal' && activePane?.status === 'ready'
 
   const commit = (): void => {
     if (!draft || !draft.command.trim()) {

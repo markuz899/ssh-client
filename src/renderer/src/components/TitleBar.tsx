@@ -1,8 +1,8 @@
 import { useStore } from '../lib/store'
 
 export default function TitleBar(): JSX.Element {
-  const { tabs, encryptionAvailable } = useStore()
-  const active = tabs.filter((t) => t.status === 'ready').length
+  const { panes, encryptionAvailable } = useStore()
+  const active = Object.values(panes).filter((p) => p.status === 'ready').length
 
   return (
     <header className="drag flex h-11 shrink-0 items-center gap-3 border-b border-line bg-panel/50 pl-[88px] pr-4">

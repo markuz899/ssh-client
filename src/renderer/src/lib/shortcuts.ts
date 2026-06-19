@@ -10,6 +10,9 @@ export type ActionId =
   | 'newConnection'
   | 'closeTab'
   | 'duplicateTab'
+  | 'splitRight'
+  | 'splitDown'
+  | 'closePane'
   | 'nextTab'
   | 'prevTab'
   | 'viewTerminal'
@@ -23,6 +26,9 @@ export interface ActionMeta {
 
 export const ACTIONS: ActionMeta[] = [
   { id: 'searchTerminal', label: 'Cerca nel terminale', group: 'Terminale' },
+  { id: 'splitRight', label: 'Dividi pannello a destra', group: 'Terminale' },
+  { id: 'splitDown', label: 'Dividi pannello sotto', group: 'Terminale' },
+  { id: 'closePane', label: 'Chiudi pannello', group: 'Terminale' },
   { id: 'duplicateTab', label: 'Duplica tab', group: 'Terminale' },
   { id: 'closeTab', label: 'Chiudi tab', group: 'Terminale' },
   { id: 'nextTab', label: 'Tab successivo', group: 'Terminale' },
@@ -41,6 +47,9 @@ const MOD = IS_MAC ? 'cmd' : 'ctrl'
 
 export const DEFAULT_BINDINGS: Record<ActionId, string> = {
   searchTerminal: `${MOD}+f`,
+  splitRight: `${MOD}+shift+d`,
+  splitDown: `${MOD}+shift+s`,
+  closePane: `${MOD}+shift+w`,
   duplicateTab: `${MOD}+d`,
   closeTab: `${MOD}+w`,
   nextTab: 'ctrl+tab',

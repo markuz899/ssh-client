@@ -24,7 +24,7 @@ function inputFor(c: Connection): ConnectInput {
 }
 
 export default function DashboardView(): JSX.Element {
-  const { connections, tabs, startSession, setView, setMonitorTarget, setSftpTarget, openEditor } =
+  const { connections, panes, startSession, setView, setMonitorTarget, setSftpTarget, openEditor } =
     useStore()
   const [pings, setPings] = useState<Record<string, Ping>>({})
   const mounted = useRef(true)
@@ -76,7 +76,7 @@ export default function DashboardView(): JSX.Element {
   }
 
   const upCount = connections.filter((c) => pings[c.id]?.state === 'up').length
-  const activeSessions = tabs.filter((t) => t.status === 'ready').length
+  const activeSessions = Object.values(panes).filter((p) => p.status === 'ready').length
 
   return (
     <div className="flex flex-1 flex-col overflow-y-auto p-6">

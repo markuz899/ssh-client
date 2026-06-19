@@ -7,10 +7,10 @@ import { registerData } from '../../lib/sessionBus'
 import { registerTerminal } from '../../lib/terminalRegistry'
 import { useSettings } from '../../lib/settings'
 import { matchAndDispatch } from '../../lib/shortcuts'
-import type { Tab } from '../../lib/store'
+import type { Pane } from '../../lib/store'
 
 interface Props {
-  tab: Tab
+  pane: Pane
   active: boolean
 }
 
@@ -38,14 +38,14 @@ const THEME = {
   brightWhite: '#FFFFFF'
 }
 
-export default function TerminalView({ tab, active }: Props): JSX.Element {
+export default function TerminalView({ pane, active }: Props): JSX.Element {
   const hostRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
 
   // Crea il terminale una volta sola, quando il sessionId è noto.
   useEffect(() => {
-    if (!tab.sessionId || !hostRef.current || termRef.current) return
+    if (!pane.sessionId || !hostRef.current || termRef.current) return
 
     const term = new Terminal({
       fontFamily: '"JetBrains Mono", ui-monospace, monospace',
@@ -84,9 +84,9 @@ export default function TerminalView({ tab, active }: Props): JSX.Element {
       return true
     })
 
-    const offRegistry = registerTerminal(tab.id, { terminal: term, search })
+    const offRegistry = registerTerminal(pane.id, { terminal: term, search })
 
-    const sessionId = tab.sessionId
+    const sessionId = pane.sessionId
     const offData = registerData(sessionId, (data) => term.write(data))
     term.onData((data) => window.phosphor.session.write(sessionId, data))
     term.onResize(({ cols, rows }) =>
@@ -109,9 +109,9 @@ export default function TerminalView({ tab, active }: Props): JSX.Element {
       term.dispose()
       termRef.current = null
     }
-  }, [tab.sessionId, tab.id])
+  }, [pane.sessionId, pane.id])
 
-  // Rifit + focus quando il tab torna attivo.
+  // Rifit + focus quando il pannello torna attivo.
   useEffect(() => {
     if (!active) return
     const t = setTimeout(() => {
@@ -123,7 +123,7 @@ export default function TerminalView({ tab, active }: Props): JSX.Element {
       termRef.current?.focus()
     }, 30)
     return () => clearTimeout(t)
-  }, [active, tab.sessionId])
+  }, [active, pane.sessionId])
 
   return (
     <div

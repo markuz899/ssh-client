@@ -17,6 +17,9 @@ ssh -i effatta.pem effatta@52.166.113.244
   `.pem` su disco senza importarlo.
 - **Terminale multi-tab** basato su `xterm.js` + `ssh2`. Ogni tab è una shell
   PTY indipendente; il pulsante ⧉ apre un **nuovo tab sulla stessa connessione**.
+- **Split View**: ogni tab si può dividere in più pannelli (orizzontali e
+  verticali) ridimensionabili con drag&drop; ogni pannello ha una sessione SSH,
+  stato e cronologia separati. Layout **salvabili e ripristinabili** dal menu ▦.
 - **Comandi salvati** per connessione: appaiono come snippet cliccabili sotto il
   terminale. Clic = invia ed esegue; `Alt`+clic = digita senza premere Invio.
   Puoi anche definire un **comando all'avvio** eseguito automaticamente.

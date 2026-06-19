@@ -5,14 +5,14 @@ import { useSettings } from '../../lib/settings'
 import { getTerminal } from '../../lib/terminalRegistry'
 
 interface Props {
-  tabId: string
+  paneId: string
 }
 
 /**
  * Barra di ricerca sul terminale attivo. Usa il SearchAddon di xterm registrato
  * nel terminalRegistry. Invio = successivo, Shift+Invio = precedente, Esc = chiudi.
  */
-export default function TerminalSearch({ tabId }: Props): JSX.Element {
+export default function TerminalSearch({ paneId }: Props): JSX.Element {
   const setSearchOpen = useStore((s) => s.setSearchOpen)
   const accent = useSettings((s) => s.accent)
   const [query, setQuery] = useState('')
@@ -34,7 +34,7 @@ export default function TerminalSearch({ tabId }: Props): JSX.Element {
 
   // Aggancio agli eventi del SearchAddon + focus iniziale.
   useEffect(() => {
-    const entry = getTerminal(tabId)
+    const entry = getTerminal(paneId)
     inputRef.current?.focus()
     inputRef.current?.select()
     if (!entry) return
@@ -45,10 +45,10 @@ export default function TerminalSearch({ tabId }: Props): JSX.Element {
       sub.dispose()
       entry.search.clearDecorations()
     }
-  }, [tabId])
+  }, [paneId])
 
   const find = (dir: 'next' | 'prev', q = query): void => {
-    const entry = getTerminal(tabId)
+    const entry = getTerminal(paneId)
     if (!entry) return
     if (!q) {
       entry.search.clearDecorations()
@@ -60,9 +60,9 @@ export default function TerminalSearch({ tabId }: Props): JSX.Element {
   }
 
   const close = (): void => {
-    getTerminal(tabId)?.search.clearDecorations()
+    getTerminal(paneId)?.search.clearDecorations()
     setSearchOpen(false)
-    getTerminal(tabId)?.terminal.focus()
+    getTerminal(paneId)?.terminal.focus()
   }
 
   const onKeyDown = (e: React.KeyboardEvent): void => {

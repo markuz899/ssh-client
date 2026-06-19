@@ -1,0 +1,171 @@
+// Tipi condivisi tra main, preload e renderer.
+
+export type AuthMethod = 'key' | 'password' | 'agent'
+
+export interface SavedCommand {
+  id: string
+  label: string
+  command: string
+  /** Se true, invia anche Invio (\r) dopo il comando. */
+  runOnSend: boolean
+}
+
+export interface Connection {
+  id: string
+  name: string
+  description: string
+  host: string
+  port: number
+  username: string
+  authMethod: AuthMethod
+  /** Percorso al file .pem se l'utente ne indica uno sul disco. */
+  keyPath?: string
+  /** True quando la chiave privata è stata importata e cifrata nello store. */
+  hasStoredKey: boolean
+  /** True quando la passphrase della chiave è stata salvata cifrata. */
+  hasStoredPassphrase: boolean
+  /** True quando la password è stata salvata cifrata. */
+  hasStoredPassword: boolean
+  /** Comando eseguito automaticamente all'apertura del primo shell. */
+  startupCommand?: string
+  commands: SavedCommand[]
+  color: string
+  createdAt: number
+  lastUsedAt?: number
+}
+
+/** Payload completo usato per aprire una sessione: include i segreti in chiaro,
+ *  presi dallo store cifrato oppure inseriti al volo dall'utente. */
+export interface ConnectInput {
+  connectionId?: string
+  host: string
+  port: number
+  username: string
+  authMethod: AuthMethod
+  privateKey?: string
+  keyPath?: string
+  passphrase?: string
+  password?: string
+  cols?: number
+  rows?: number
+}
+
+export type SessionStatus =
+  | 'idle'
+  | 'connecting'
+  | 'authenticating'
+  | 'ready'
+  | 'error'
+  | 'closed'
+
+export interface SessionMeta {
+  sessionId: string
+  connectionId?: string
+  title: string
+  host: string
+  username: string
+  status: SessionStatus
+}
+
+// Eventi push dal main verso il renderer per ogni sessione.
+export interface SessionDataEvent {
+  sessionId: string
+  data: string
+}
+export interface SessionStatusEvent {
+  sessionId: string
+  status: SessionStatus
+  message?: string
+}
+
+export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: string }
+
+// ---- Monitoraggio server ----
+
+export interface DiskUsage {
+  filesystem: string
+  mount: string
+  sizeKb: number
+  usedKb: number
+  availKb: number
+  percent: number
+}
+
+export interface ProcessInfo {
+  cpu: number
+  mem: number
+  command: string
+}
+
+export interface MonitorSnapshot {
+  at: number
+  cpuPercent: number
+  cores: number
+  load: [number, number, number]
+  mem: { totalKb: number; usedKb: number; availableKb: number; percent: number }
+  swap: { totalKb: number; usedKb: number; percent: number }
+  uptimeSec: number
+  disks: DiskUsage[]
+  processes: ProcessInfo[]
+  host: { os: string; hostname: string }
+}
+
+export type MonitorStatus = 'connecting' | 'ready' | 'error'
+
+export interface MonitorStatusEvent {
+  monitorId: string
+  status: MonitorStatus
+  message?: string
+}
+
+// ---- Raggiungibilità (Dashboard) ----
+
+export interface PingResult {
+  reachable: boolean
+  ms: number
+}
+
+// ---- SFTP ----
+
+export type SftpEntryType = 'dir' | 'file' | 'link' | 'other'
+
+export interface SftpEntry {
+  name: string
+  type: SftpEntryType
+  size: number
+  mtime: number
+  /** Permessi in formato ottale leggibile, es. "rwxr-xr-x". */
+  mode: string
+}
+
+export type SftpStatus = 'connecting' | 'ready' | 'error'
+
+export interface SftpStatusEvent {
+  sftpId: string
+  status: SftpStatus
+  message?: string
+}
+
+// ---- Tunnel (port forwarding) ----
+
+export type TunnelType = 'local' | 'remote'
+
+export interface TunnelConfig {
+  id: string
+  name: string
+  connectionId: string
+  type: TunnelType
+  /** Porta in ascolto (locale per 'local', sul server per 'remote'). */
+  srcPort: number
+  /** Host di destinazione raggiunto attraverso il tunnel. */
+  destHost: string
+  destPort: number
+}
+
+export type TunnelStatus = 'inactive' | 'starting' | 'active' | 'error'
+
+export interface TunnelStatusEvent {
+  tunnelId: string
+  status: TunnelStatus
+  message?: string
+}

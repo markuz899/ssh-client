@@ -1,0 +1,335 @@
+import { ipcMain, dialog, BrowserWindow, type IpcMainEvent } from 'electron'
+import { readFile } from 'fs/promises'
+import type { IpcResult } from '../shared/types'
+import { basename } from 'path'
+import {
+  listConnections,
+  upsertConnection,
+  deleteConnection,
+  touchConnection,
+  getSecret,
+  getConnection,
+  encryptionAvailable,
+  listGlobalCommands,
+  setGlobalCommands,
+  listTunnels,
+  upsertTunnel,
+  deleteTunnel,
+  type UpsertInput
+} from './store'
+import type { Connection, ConnectInput, SavedCommand, TunnelConfig } from '../shared/types'
+import { createSession, writeToSession, resizeSession, closeSession } from './ssh'
+import { openMonitor, sampleMonitor, closeMonitor } from './monitor'
+import { tcpPing } from './probe'
+import {
+  openSftp,
+  homeDir,
+  listDir,
+  downloadFile,
+  uploadFile,
+  makeDir,
+  removeEntry,
+  renameEntry,
+  closeSftp
+} from './sftp'
+import { startTunnel, stopTunnel, isActive } from './tunnels'
+
+function ok<T>(data: T): IpcResult<T> {
+  return { ok: true, data }
+}
+function fail(error: unknown): IpcResult<never> {
+  return { ok: false, error: error instanceof Error ? error.message : String(error) }
+}
+
+// Costruisce un ConnectInput dai dati di una connessione salvata.
+function connectInputFromConnection(c: Connection): ConnectInput {
+  return {
+    connectionId: c.id,
+    host: c.host,
+    port: c.port,
+    username: c.username,
+    authMethod: c.authMethod,
+    keyPath: c.keyPath
+  }
+}
+
+// Completa il ConnectInput con i segreti salvati (cifrati) se non già forniti.
+function withStoredSecrets(input: ConnectInput): ConnectInput {
+  const merged: ConnectInput = { ...input }
+  if (input.connectionId) {
+    const secret = getSecret(input.connectionId)
+    if (merged.privateKey === undefined) merged.privateKey = secret.privateKey
+    if (merged.passphrase === undefined) merged.passphrase = secret.passphrase
+    if (merged.password === undefined) merged.password = secret.password
+  }
+  return merged
+}
+
+export function registerIpc(getWindow: () => BrowserWindow | null): void {
+  // ---- Connessioni (CRUD) ----
+  ipcMain.handle('connections:list', () => ok(listConnections()))
+
+  ipcMain.handle('connections:upsert', (_e, input: UpsertInput) => {
+    try {
+      return ok(upsertConnection(input))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('connections:delete', (_e, id: string) => {
+    deleteConnection(id)
+    return ok(true)
+  })
+
+  ipcMain.handle('store:encryptionAvailable', () => ok(encryptionAvailable()))
+
+  // ---- Comandi globali ----
+  ipcMain.handle('globalCommands:list', () => ok(listGlobalCommands()))
+  ipcMain.handle('globalCommands:set', (_e, commands: SavedCommand[]) =>
+    ok(setGlobalCommands(commands))
+  )
+
+  // ---- Selezione file chiave .pem ----
+  ipcMain.handle('dialog:pickKey', async () => {
+    const win = getWindow()
+    if (!win) return fail('Finestra non disponibile')
+    const res = await dialog.showOpenDialog(win, {
+      title: 'Seleziona la chiave privata',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Chiavi', extensions: ['pem', 'key', 'ppk', 'rsa', 'ed25519'] },
+        { name: 'Tutti i file', extensions: ['*'] }
+      ]
+    })
+    if (res.canceled || res.filePaths.length === 0) return ok(null)
+    const path = res.filePaths[0]
+    const content = await readFile(path, 'utf8')
+    return ok({ path, content })
+  })
+
+  // ---- Sessioni terminale ----
+  ipcMain.handle('session:open', (_e, input: ConnectInput) => {
+    try {
+      // Recupera i segreti salvati se non passati esplicitamente.
+      const merged = withStoredSecrets(input)
+      if (input.connectionId) touchConnection(input.connectionId)
+      const sessionId = createSession(merged, (event) => {
+        const win = getWindow()
+        if (!win || win.isDestroyed()) return
+        if (event.type === 'data') {
+          win.webContents.send('session:data', {
+            sessionId: event.sessionId,
+            data: event.data
+          })
+        } else {
+          win.webContents.send('session:status', {
+            sessionId: event.sessionId,
+            status: event.status,
+            message: event.message
+          })
+        }
+      })
+      return ok({ sessionId })
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.on('session:write', (_e: IpcMainEvent, p: { sessionId: string; data: string }) => {
+    writeToSession(p.sessionId, p.data)
+  })
+
+  ipcMain.on(
+    'session:resize',
+    (_e: IpcMainEvent, p: { sessionId: string; cols: number; rows: number }) => {
+      resizeSession(p.sessionId, p.cols, p.rows)
+    }
+  )
+
+  ipcMain.handle('session:close', (_e, sessionId: string) => {
+    closeSession(sessionId)
+    return ok(true)
+  })
+
+  // ---- Monitoraggio ----
+  ipcMain.handle('monitor:open', (_e, input: ConnectInput) => {
+    try {
+      const merged = withStoredSecrets(input)
+      const monitorId = openMonitor(merged, (id, status, message) => {
+        const win = getWindow()
+        if (!win || win.isDestroyed()) return
+        win.webContents.send('monitor:status', { monitorId: id, status, message })
+      })
+      return ok({ monitorId })
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('monitor:sample', async (_e, monitorId: string) => {
+    try {
+      return ok(await sampleMonitor(monitorId))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('monitor:close', (_e, monitorId: string) => {
+    closeMonitor(monitorId)
+    return ok(true)
+  })
+
+  // ---- Raggiungibilità (Dashboard) ----
+  ipcMain.handle('net:ping', async (_e, p: { host: string; port: number }) => {
+    try {
+      return ok(await tcpPing(p.host, p.port))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  // ---- SFTP ----
+  ipcMain.handle('sftp:open', (_e, input: ConnectInput) => {
+    try {
+      const sftpId = openSftp(withStoredSecrets(input), (id, status, message) => {
+        const win = getWindow()
+        if (!win || win.isDestroyed()) return
+        win.webContents.send('sftp:status', { sftpId: id, status, message })
+      })
+      return ok({ sftpId })
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:home', async (_e, id: string) => {
+    try {
+      return ok(await homeDir(id))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:list', async (_e, p: { id: string; path: string }) => {
+    try {
+      return ok(await listDir(p.id, p.path))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:download', async (_e, p: { id: string; remotePath: string; name: string }) => {
+    try {
+      const win = getWindow()
+      if (!win) return fail('Finestra non disponibile')
+      const res = await dialog.showSaveDialog(win, { title: 'Salva con nome', defaultPath: p.name })
+      if (res.canceled || !res.filePath) return ok(false)
+      await downloadFile(p.id, p.remotePath, res.filePath)
+      return ok(true)
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:uploadDialog', async (_e, p: { id: string; remoteDir: string }) => {
+    try {
+      const win = getWindow()
+      if (!win) return fail('Finestra non disponibile')
+      const res = await dialog.showOpenDialog(win, {
+        title: 'Carica file',
+        properties: ['openFile', 'multiSelections']
+      })
+      if (res.canceled || res.filePaths.length === 0) return ok(0)
+      for (const local of res.filePaths) {
+        const remote = `${p.remoteDir.replace(/\/$/, '')}/${basename(local)}`
+        await uploadFile(p.id, local, remote)
+      }
+      return ok(res.filePaths.length)
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:uploadPaths', async (_e, p: { id: string; remoteDir: string; paths: string[] }) => {
+    try {
+      for (const local of p.paths) {
+        const remote = `${p.remoteDir.replace(/\/$/, '')}/${basename(local)}`
+        await uploadFile(p.id, local, remote)
+      }
+      return ok(p.paths.length)
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:mkdir', async (_e, p: { id: string; path: string }) => {
+    try {
+      await makeDir(p.id, p.path)
+      return ok(true)
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:remove', async (_e, p: { id: string; path: string; isDir: boolean }) => {
+    try {
+      await removeEntry(p.id, p.path, p.isDir)
+      return ok(true)
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:rename', async (_e, p: { id: string; from: string; to: string }) => {
+    try {
+      await renameEntry(p.id, p.from, p.to)
+      return ok(true)
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:close', (_e, id: string) => {
+    closeSftp(id)
+    return ok(true)
+  })
+
+  // ---- Tunnel ----
+  ipcMain.handle('tunnels:list', () =>
+    ok(listTunnels().map((t) => ({ ...t, active: isActive(t.id) })))
+  )
+
+  ipcMain.handle('tunnels:upsert', (_e, t: Omit<TunnelConfig, 'id'> & { id?: string }) => {
+    try {
+      return ok(upsertTunnel(t))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('tunnels:delete', (_e, id: string) => {
+    stopTunnel(id)
+    deleteTunnel(id)
+    return ok(true)
+  })
+
+  ipcMain.handle('tunnel:start', (_e, id: string) => {
+    const config = listTunnels().find((t) => t.id === id)
+    if (!config) return fail('Tunnel non trovato')
+    const conn = getConnection(config.connectionId)
+    if (!conn) return fail('Connessione associata non trovata')
+    const input = withStoredSecrets(connectInputFromConnection(conn))
+    startTunnel(config, input, (tid, status, message) => {
+      const win = getWindow()
+      if (!win || win.isDestroyed()) return
+      win.webContents.send('tunnel:status', { tunnelId: tid, status, message })
+    })
+    return ok(true)
+  })
+
+  ipcMain.handle('tunnel:stop', (_e, id: string) => {
+    stopTunnel(id)
+    return ok(true)
+  })
+}

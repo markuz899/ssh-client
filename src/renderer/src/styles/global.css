@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+
+  /* Palette tematizzabile (valori "R G B"). useSettings le sovrascrive. */
+  --c-void: 6 10 18;
+  --c-panel: 11 18 30;
+  --c-elev: 16 26 43;
+  --c-accent: 94 246 255;
+  --c-accent-dim: 43 169 181;
+  --c-accent-deep: 14 58 68;
+  --c-matrix: 91 240 138;
+  --c-amber: 255 179 71;
+  --c-danger: 255 92 106;
+  --c-ink: 214 224 238;
+  --c-ink-dim: 147 162 184;
+  --c-ink-faint: 107 123 148;
+  --c-line: rgb(var(--c-accent) / 0.1);
+}
+
+/* Quando le animazioni sono disattivate dalle Impostazioni. */
+.no-anim *,
+.no-anim *::before,
+.no-anim *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: rgb(var(--c-void));
+  color: rgb(var(--c-ink));
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Barra superiore trascinabile (frameless su macOS). */
+.drag {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Scrollbar minimale e in tema. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--c-accent) / 0.16);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--c-accent) / 0.32);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+}
+
+/* Reticolo di sfondo fisso dietro tutta l'app. */
+.grid-backdrop {
+  background-image:
+    linear-gradient(rgb(var(--c-accent) / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--c-accent) / 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 120% 80% at 50% 0%, #000 35%, transparent 100%);
+}
+
+/* Texture scanline CRT sovrapponibile. */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.16) 3px
+  );
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+.text-glow {
+  text-shadow: 0 0 8px rgb(var(--c-accent) / 0.55);
+}
+
+.terminal-host .xterm {
+  padding: 14px 16px;
+  height: 100%;
+}
+.terminal-host .xterm-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

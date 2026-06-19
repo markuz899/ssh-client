@@ -161,6 +161,33 @@ export async function uploadFile(id: string, localPath: string, remotePath: stri
   })
 }
 
+const MAX_EDIT_BYTES = 2 * 1024 * 1024
+
+export async function readFileText(id: string, path: string): Promise<string> {
+  const sftp = await wrapper(id)
+  const size = await new Promise<number>((resolve, reject) => {
+    sftp.stat(path, (err, stats) => (err ? reject(err) : resolve(stats.size ?? 0)))
+  })
+  if (size > MAX_EDIT_BYTES) {
+    throw new Error('File troppo grande per l’editor (max 2 MB).')
+  }
+  const buf = await new Promise<Buffer>((resolve, reject) => {
+    sftp.readFile(path, (err, data) => (err ? reject(err) : resolve(data)))
+  })
+  // Rifiuta i binari: un null byte nel primo blocco è un buon indicatore.
+  if (buf.subarray(0, 8000).includes(0)) {
+    throw new Error('Il file sembra binario e non è modificabile come testo.')
+  }
+  return buf.toString('utf8')
+}
+
+export async function writeFileText(id: string, path: string, content: string): Promise<void> {
+  const sftp = await wrapper(id)
+  return new Promise((resolve, reject) => {
+    sftp.writeFile(path, content, { encoding: 'utf8' }, (err) => (err ? reject(err) : resolve()))
+  })
+}
+
 export async function makeDir(id: string, path: string): Promise<void> {
   const sftp = await wrapper(id)
   return new Promise((resolve, reject) => {

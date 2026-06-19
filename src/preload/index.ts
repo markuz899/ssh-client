@@ -108,6 +108,10 @@ const api = {
       ipcRenderer.invoke('sftp:remove', { id, path, isDir }),
     rename: (id: string, from: string, to: string): Promise<IpcResult<boolean>> =>
       ipcRenderer.invoke('sftp:rename', { id, from, to }),
+    readFile: (id: string, path: string): Promise<IpcResult<string>> =>
+      ipcRenderer.invoke('sftp:readFile', { id, path }),
+    writeFile: (id: string, path: string, content: string): Promise<IpcResult<boolean>> =>
+      ipcRenderer.invoke('sftp:writeFile', { id, path, content }),
     close: (id: string): Promise<IpcResult<boolean>> => ipcRenderer.invoke('sftp:close', id),
     onStatus: (cb: (e: SftpStatusEvent) => void): (() => void) => {
       const listener = (_: unknown, e: SftpStatusEvent): void => cb(e)

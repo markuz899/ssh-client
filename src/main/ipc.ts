@@ -30,6 +30,8 @@ import {
   makeDir,
   removeEntry,
   renameEntry,
+  readFileText,
+  writeFileText,
   closeSftp
 } from './sftp'
 import { startTunnel, stopTunnel, isActive } from './tunnels'
@@ -284,6 +286,23 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('sftp:rename', async (_e, p: { id: string; from: string; to: string }) => {
     try {
       await renameEntry(p.id, p.from, p.to)
+      return ok(true)
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:readFile', async (_e, p: { id: string; path: string }) => {
+    try {
+      return ok(await readFileText(p.id, p.path))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('sftp:writeFile', async (_e, p: { id: string; path: string; content: string }) => {
+    try {
+      await writeFileText(p.id, p.path, p.content)
       return ok(true)
     } catch (e) {
       return fail(e)

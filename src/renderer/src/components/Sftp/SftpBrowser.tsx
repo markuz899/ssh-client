@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../../lib/store'
+import RemoteEditor from './RemoteEditor'
 import type { Connection, ConnectInput, SftpEntry, SftpStatus } from '@shared/types'
 
 function inputFor(c: Connection): ConnectInput {
@@ -52,6 +53,7 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
   const [dragOver, setDragOver] = useState(false)
   const [newFolder, setNewFolder] = useState<string | null>(null)
   const [editingPath, setEditingPath] = useState<string | null>(null)
+  const [editFile, setEditFile] = useState<{ path: string; name: string } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const sftpId = useRef<string | null>(null)
   const setSftpTarget = useStore((s) => s.setSftpTarget)
@@ -128,7 +130,10 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
 
   const onEntryOpen = (e: SftpEntry): void => {
     if (e.type === 'dir') navigate(joinPath(cwd, e.name))
+    else if (e.type === 'file') setEditFile({ path: joinPath(cwd, e.name), name: e.name })
   }
+
+  const editEntry = (e: SftpEntry): void => setEditFile({ path: joinPath(cwd, e.name), name: e.name })
 
   const download = async (e: SftpEntry): Promise<void> => {
     const id = sftpId.current
@@ -409,6 +414,15 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
                     </td>
                     <td className="w-24 py-1.5 pr-4 text-right">
                       <span className="inline-flex gap-2 opacity-0 transition group-hover:opacity-100">
+                        {e.type === 'file' && (
+                          <button
+                            onClick={() => editEntry(e)}
+                            title="Modifica"
+                            className="text-ink-dim hover:text-phosphor"
+                          >
+                            ✎
+                          </button>
+                        )}
                         {e.type !== 'dir' && (
                           <button
                             onClick={() => download(e)}
@@ -453,6 +467,20 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
           <div className="font-mono text-sm text-phosphor text-glow">rilascia per caricare in {cwd}</div>
         </div>
       )}
+
+      {/* Editor remoto */}
+      <AnimatePresence>
+        {editFile && sftpId.current && (
+          <RemoteEditor
+            key={editFile.path}
+            sftpId={sftpId.current}
+            path={editFile.path}
+            name={editFile.name}
+            onClose={() => setEditFile(null)}
+            onSaved={refresh}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

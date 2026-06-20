@@ -48,6 +48,9 @@ export default function DockerDashboard({ connection }: { connection: Connection
   const [attempt, setAttempt] = useState(0)
   const [busy, setBusy] = useState<Set<string>>(new Set())
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  // Distingue "ancora in caricamento" da "caricato ma vuoto" per non mostrare
+  // il messaggio "nessun container" prima della prima lista.
+  const [firstLoaded, setFirstLoaded] = useState(false)
 
   const engineRef = useRef<string | undefined>()
   const pausedRef = useRef(false)
@@ -64,6 +67,7 @@ export default function DockerDashboard({ connection }: { connection: Connection
     if (listRes.ok) {
       setContainers(listRes.data)
       setError(undefined)
+      setFirstLoaded(true)
       if (statsRes.ok) setStats(statsById(listRes.data, statsRes.data))
     } else {
       setError(listRes.error)
@@ -81,6 +85,7 @@ export default function DockerDashboard({ connection }: { connection: Connection
     setContainers([])
     setStats(new Map())
     setError(undefined)
+    setFirstLoaded(false)
 
     const start = async (): Promise<void> => {
       const res = await window.phosphor.docker.open(inputFor(connection))
@@ -244,7 +249,9 @@ export default function DockerDashboard({ connection }: { connection: Connection
       {/* Corpo: tabella container + ispettore */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto p-5">
-          {containers.length === 0 ? (
+          {!firstLoaded ? (
+            <BodyRadar />
+          ) : containers.length === 0 ? (
             <div className="flex h-full items-center justify-center font-mono text-[13px] text-ink-dim">
               Nessun container presente su questo server.
             </div>
@@ -293,6 +300,34 @@ export default function DockerDashboard({ connection }: { connection: Connection
           )}
         </AnimatePresence>
       </div>
+    </div>
+  )
+}
+
+function BodyRadar(): JSX.Element {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center text-center"
+      >
+        <div className="relative mb-5 h-20 w-20">
+          {[0, 0.6, 1.2].map((d) => (
+            <span
+              key={d}
+              className="absolute inset-0 rounded-full border border-phosphor/40 animate-pulse-ring"
+              style={{ animationDelay: `${d}s` }}
+            />
+          ))}
+          <div className="absolute inset-0 flex items-center justify-center rounded-full border border-phosphor/40 text-xl text-phosphor text-glow">
+            ❒
+          </div>
+        </div>
+        <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-ink-dim">
+          rilevamento container…
+        </div>
+      </motion.div>
     </div>
   )
 }

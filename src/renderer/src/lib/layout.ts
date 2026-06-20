@@ -48,6 +48,30 @@ export function removeLeaf(node: LayoutNode, targetPaneId: string): LayoutNode |
   return { ...node, a, b }
 }
 
+/** Sostituisce una foglia con una divisione tra la foglia stessa e un sottoalbero
+ *  (usato per il drop di un tab su un pannello). `before` mette il sottoalbero
+ *  prima (a sinistra/sopra) della foglia di destinazione. */
+export function replaceLeafWithSubtree(
+  node: LayoutNode,
+  targetPaneId: string,
+  dir: SplitDir,
+  subtree: LayoutNode,
+  before: boolean,
+  splitId: string
+): LayoutNode {
+  if (node.type === 'leaf') {
+    if (node.paneId !== targetPaneId) return node
+    return before
+      ? { type: 'split', id: splitId, dir, a: subtree, b: node, ratio: 0.5 }
+      : { type: 'split', id: splitId, dir, a: node, b: subtree, ratio: 0.5 }
+  }
+  return {
+    ...node,
+    a: replaceLeafWithSubtree(node.a, targetPaneId, dir, subtree, before, splitId),
+    b: replaceLeafWithSubtree(node.b, targetPaneId, dir, subtree, before, splitId)
+  }
+}
+
 /** Aggiorna il rapporto di una specifica divisione. */
 export function setRatio(node: LayoutNode, splitId: string, ratio: number): LayoutNode {
   if (node.type === 'leaf') return node

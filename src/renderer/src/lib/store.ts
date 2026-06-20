@@ -8,7 +8,8 @@ import {
   firstLeaf,
   splitLeaf,
   removeLeaf,
-  setRatio
+  setRatio,
+  replaceLeafWithSubtree
 } from './layout'
 
 /** Un pannello = un terminale con la propria sessione SSH, stato e cronologia. */
@@ -85,6 +86,8 @@ interface AppState {
   globalCommands: SavedCommand[]
   searchOpen: boolean
   savedLayouts: SavedLayout[]
+  /** Tab attualmente trascinato (per drop-to-split). */
+  draggingTabId?: string
 
   loadConnections: () => Promise<void>
   loadGlobalCommands: () => Promise<void>
@@ -108,6 +111,15 @@ interface AppState {
   splitPane: (tabId: string, paneId: string, dir: SplitDir) => void
   setSplitRatio: (tabId: string, splitId: string, ratio: number) => void
   reconnectPane: (paneId: string) => void
+  setDraggingTab: (id?: string) => void
+  /** Sposta un intero tab dentro un pannello di un altro tab, creando uno split. */
+  moveTabIntoPane: (
+    sourceTabId: string,
+    targetTabId: string,
+    targetPaneId: string,
+    dir: SplitDir,
+    before: boolean
+  ) => void
 
   duplicateTab: (tabId: string) => void
   closeActiveTab: () => void
@@ -183,6 +195,7 @@ export const useStore = create<AppState>((set, get) => {
     globalCommands: [],
     searchOpen: false,
     savedLayouts: loadLayouts(),
+    draggingTabId: undefined,
 
     loadConnections: async () => {
       const res = await window.phosphor.connections.list()
@@ -314,6 +327,30 @@ export const useStore = create<AppState>((set, get) => {
       }
       get().updatePane(paneId, { status: 'connecting', errorMessage: undefined, sessionId: undefined })
       openSession(paneId, inputFromConnection(conn))
+    },
+
+    setDraggingTab: (draggingTabId) => set({ draggingTabId }),
+
+    moveTabIntoPane: (sourceTabId, targetTabId, targetPaneId, dir, before) => {
+      const st = get()
+      if (sourceTabId === targetTabId) return
+      const source = st.tabs.find((t) => t.id === sourceTabId)
+      const target = st.tabs.find((t) => t.id === targetTabId)
+      if (!source || !target) return
+      // Innesta l'intero layout del tab sorgente sulla foglia di destinazione.
+      const newLayout = replaceLeafWithSubtree(
+        target.layout,
+        targetPaneId,
+        dir,
+        source.layout,
+        before,
+        uid('split')
+      )
+      const movedPane = source.activePaneId
+      const tabs = st.tabs
+        .filter((t) => t.id !== sourceTabId)
+        .map((t) => (t.id === targetTabId ? { ...t, layout: newLayout, activePaneId: movedPane } : t))
+      set({ tabs, activeTabId: targetTabId, draggingTabId: undefined })
     },
 
     duplicateTab: (tabId) => {

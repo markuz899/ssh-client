@@ -20,7 +20,15 @@ import type {
   DockerContainerAction,
   DockerEngineStatusEvent,
   DockerExecDataEvent,
-  DockerExecStatusEvent
+  DockerExecStatusEvent,
+  AiProviderInfo,
+  AiSettings,
+  AiKeyStatus,
+  AiMessage,
+  AiContext,
+  AiStreamDeltaEvent,
+  AiStreamDoneEvent,
+  AiStreamErrorEvent
 } from '../shared/types'
 
 interface UpsertInput {
@@ -200,6 +208,41 @@ const api = {
         ipcRenderer.on('docker:exec:status', listener)
         return () => ipcRenderer.removeListener('docker:exec:status', listener)
       }
+    }
+  },
+  ai: {
+    catalog: (): Promise<IpcResult<AiProviderInfo[]>> => ipcRenderer.invoke('ai:catalog'),
+    getSettings: (): Promise<IpcResult<AiSettings>> => ipcRenderer.invoke('ai:settings:get'),
+    setSettings: (patch: Partial<AiSettings>): Promise<IpcResult<AiSettings>> =>
+      ipcRenderer.invoke('ai:settings:set', patch),
+    keyStatus: (): Promise<IpcResult<AiKeyStatus>> => ipcRenderer.invoke('ai:keyStatus'),
+    setKey: (provider: string, key: string): Promise<IpcResult<AiKeyStatus>> =>
+      ipcRenderer.invoke('ai:key:set', { provider, key }),
+    clearKey: (provider: string): Promise<IpcResult<AiKeyStatus>> =>
+      ipcRenderer.invoke('ai:key:clear', provider),
+    test: (): Promise<IpcResult<boolean>> => ipcRenderer.invoke('ai:test'),
+    send: (
+      requestId: string,
+      messages: AiMessage[],
+      context?: AiContext
+    ): Promise<IpcResult<boolean>> =>
+      ipcRenderer.invoke('ai:send', { requestId, messages, context }),
+    cancel: (requestId: string): Promise<IpcResult<boolean>> =>
+      ipcRenderer.invoke('ai:cancel', requestId),
+    onDelta: (cb: (e: AiStreamDeltaEvent) => void): (() => void) => {
+      const listener = (_: unknown, e: AiStreamDeltaEvent): void => cb(e)
+      ipcRenderer.on('ai:delta', listener)
+      return () => ipcRenderer.removeListener('ai:delta', listener)
+    },
+    onDone: (cb: (e: AiStreamDoneEvent) => void): (() => void) => {
+      const listener = (_: unknown, e: AiStreamDoneEvent): void => cb(e)
+      ipcRenderer.on('ai:done', listener)
+      return () => ipcRenderer.removeListener('ai:done', listener)
+    },
+    onError: (cb: (e: AiStreamErrorEvent) => void): (() => void) => {
+      const listener = (_: unknown, e: AiStreamErrorEvent): void => cb(e)
+      ipcRenderer.on('ai:error', listener)
+      return () => ipcRenderer.removeListener('ai:error', listener)
     }
   }
 }

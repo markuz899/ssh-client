@@ -7,6 +7,7 @@ import { closeAllSftp } from './sftp'
 import { closeAllTunnels } from './tunnels'
 import { closeAllLogs } from './logs'
 import { closeAllDocker, closeAllExec } from './docker'
+import { cancelAllChats } from './ai'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -60,6 +61,7 @@ function shutdownAll(): void {
   closeAllLogs()
   closeAllDocker()
   closeAllExec()
+  cancelAllChats()
 }
 
 app.on('window-all-closed', () => {

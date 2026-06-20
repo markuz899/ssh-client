@@ -272,3 +272,75 @@ export interface DockerExecStatusEvent {
   status: DockerExecStatus
   message?: string
 }
+
+// ---- AI Assistant ----
+
+export type AiProviderId = 'anthropic' | 'openai' | 'google' | 'openai-compatible'
+
+export interface AiModelOption {
+  id: string
+  label: string
+}
+
+export interface AiProviderInfo {
+  id: AiProviderId
+  label: string
+  /** Richiede una API key salvata per funzionare. */
+  needsKey: boolean
+  /** Permette di indicare un base URL personalizzato (es. Ollama, LM Studio). */
+  customBaseUrl: boolean
+  /** Suggerimento su dove ottenere la chiave. */
+  keyHint?: string
+  /** Modelli noti suggeriti; il campo modello resta comunque editabile. */
+  models: AiModelOption[]
+  /** Indica se i modelli del provider supportano il parametro temperatura. */
+  supportsTemperature: boolean
+}
+
+export interface AiSettings {
+  provider: AiProviderId
+  model: string
+  temperature: number
+  maxTokens: number
+  /** Istruzioni extra accodate al system prompt. */
+  systemPromptExtra: string
+  /** Override del base URL per i provider compatibili OpenAI. */
+  baseUrl: string
+  /** Allega automaticamente l'output recente del terminale attivo. */
+  autoIncludeTerminal: boolean
+}
+
+export type AiRole = 'user' | 'assistant'
+
+export interface AiMessage {
+  role: AiRole
+  content: string
+}
+
+/** Contesto della sessione SSH corrente, iniettato nel system prompt. */
+export interface AiContext {
+  connectionName?: string
+  host?: string
+  username?: string
+  /** Output recente del terminale attivo (già ripulito dagli escape ANSI). */
+  terminalTail?: string
+  /** Metriche risorse formattate (CPU, RAM, dischi…), se richieste. */
+  metrics?: string
+}
+
+export interface AiStreamDeltaEvent {
+  requestId: string
+  text: string
+}
+
+export interface AiStreamDoneEvent {
+  requestId: string
+}
+
+export interface AiStreamErrorEvent {
+  requestId: string
+  error: string
+}
+
+/** Quali provider hanno una chiave salvata (per id provider). */
+export type AiKeyStatus = Record<string, boolean>

@@ -1,7 +1,13 @@
 import Store from 'electron-store'
 import { safeStorage } from 'electron'
 import { randomUUID } from 'crypto'
-import type { Connection, SavedCommand, TunnelConfig } from '../shared/types'
+import type {
+  AiKeyStatus,
+  AiSettings,
+  Connection,
+  SavedCommand,
+  TunnelConfig
+} from '../shared/types'
 
 // Lo store su disco tiene SOLO i metadati delle connessioni in chiaro.
 // I segreti (chiave privata, passphrase, password) vivono in un blob cifrato
@@ -21,11 +27,32 @@ interface Schema {
   globalCommands: SavedCommand[]
   // Configurazioni dei tunnel (port forwarding).
   tunnels: TunnelConfig[]
+  // Impostazioni dell'assistente AI (non segrete).
+  aiSettings: AiSettings
+  // Chiavi API per provider, cifrate (providerId -> blob base64).
+  aiKeys: Record<string, string>
+}
+
+export const DEFAULT_AI_SETTINGS: AiSettings = {
+  provider: 'anthropic',
+  model: 'claude-opus-4-8',
+  temperature: 0.4,
+  maxTokens: 2048,
+  systemPromptExtra: '',
+  baseUrl: '',
+  autoIncludeTerminal: true
 }
 
 const store = new Store<Schema>({
   name: 'phosphor-ssh',
-  defaults: { connections: [], secrets: {}, globalCommands: [], tunnels: [] }
+  defaults: {
+    connections: [],
+    secrets: {},
+    globalCommands: [],
+    tunnels: [],
+    aiSettings: DEFAULT_AI_SETTINGS,
+    aiKeys: {}
+  }
 })
 
 function encrypt(value: string): string {
@@ -186,4 +213,44 @@ export function getConnection(id: string): Connection | undefined {
 
 export function encryptionAvailable(): boolean {
   return safeStorage.isEncryptionAvailable()
+}
+
+// ---- AI Assistant ----
+
+export function getAiSettings(): AiSettings {
+  return { ...DEFAULT_AI_SETTINGS, ...store.get('aiSettings') }
+}
+
+export function setAiSettings(patch: Partial<AiSettings>): AiSettings {
+  const next = { ...getAiSettings(), ...patch }
+  store.set('aiSettings', next)
+  return next
+}
+
+export function setAiKey(provider: string, key: string): void {
+  const keys = store.get('aiKeys')
+  if (key && key.trim()) keys[provider] = encrypt(key.trim())
+  else delete keys[provider]
+  store.set('aiKeys', keys)
+}
+
+export function getAiKey(provider: string): string | undefined {
+  const blob = store.get('aiKeys')[provider]
+  if (!blob) return undefined
+  const value = decrypt(blob)
+  return value || undefined
+}
+
+export function clearAiKey(provider: string): void {
+  const keys = store.get('aiKeys')
+  delete keys[provider]
+  store.set('aiKeys', keys)
+}
+
+/** Stato (presente/assente) delle chiavi salvate, senza esporre i valori. */
+export function aiKeyStatus(): AiKeyStatus {
+  const keys = store.get('aiKeys')
+  const status: AiKeyStatus = {}
+  for (const provider of Object.keys(keys)) status[provider] = Boolean(keys[provider])
+  return status
 }

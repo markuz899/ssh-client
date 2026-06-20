@@ -15,7 +15,8 @@ const ITEMS: Item[] = [
   { view: 'sftp', glyph: '⇅', label: 'File' },
   { view: 'tunnels', glyph: '⇄', label: 'Tunnel' },
   { view: 'logs', glyph: '≣', label: 'Logs' },
-  { view: 'docker', glyph: '❒', label: 'Docker' }
+  { view: 'docker', glyph: '❒', label: 'Docker' },
+  { view: 'assistant', glyph: '✦', label: 'AI' }
 ]
 
 export default function NavRail(): JSX.Element {

@@ -25,12 +25,13 @@ ssh -i effatta.pem effatta@52.166.113.244
   Puoi anche definire un **comando all'avvio** eseguito automaticamente.
 - **Parse rapido**: incolla una riga `ssh -i chiave.pem utente@host -p 2222` nel
   form e i campi si compilano da soli.
-- **Sette sezioni** dalla barra di navigazione a sinistra: **Home** (panoramica
+- **Otto sezioni** dalla barra di navigazione a sinistra: **Home** (panoramica
   di tutte le connessioni con ping di raggiungibilità live e azioni rapide),
   **Terminali**, **Monitor**, **File** (gestore SFTP con drag&drop, download,
   crea file/cartella, editor remoto), **Tunnel** (port forwarding locale/remoto),
   **Logs** (stream `tail -f` in tempo reale, indipendenti per sessione, con
-  filtro per testo/livello, ricerca, pausa, svuota ed esporta) e **Docker**.
+  filtro per testo/livello, ricerca, pausa, svuota ed esporta), **Docker** e
+  **AI** (assistente contestuale).
 - **Monitoraggio server**: apre una connessione SSH dedicata e mostra in tempo reale —
   con polling ogni 2,5s — uso CPU (anello + storico), RAM e swap, carico medio
   (1/5/15m), dischi e i processi top per CPU. Legge `/proc` via `exec`, senza
@@ -43,6 +44,15 @@ ssh -i effatta.pem effatta@52.166.113.244
   (`docker exec -it`) e un pannello statistiche dettagliato. Ogni sessione Docker
   usa una connessione SSH dedicata con **riconnessione automatica**, timeout sui
   comandi e gestione degli errori.
+- **Assistente AI**: chat integrata che analizza l'output del terminale, spiega gli
+  errori, genera comandi Linux/Docker/Kubernetes dal linguaggio naturale e propone
+  soluzioni di troubleshooting. Usa il **contesto della sessione corrente** — host,
+  output recente del terminale e, su richiesta, le metriche del server (CPU, RAM,
+  dischi) — per risposte mirate; i comandi suggeriti si **inseriscono nel terminale**
+  con un clic. **Multi-provider configurabile**: Anthropic (Claude, via SDK ufficiale),
+  OpenAI (GPT), Google (Gemini) e endpoint compatibili OpenAI in locale (Ollama,
+  LM Studio). Le **API key** dei modelli a pagamento sono salvate cifrate via
+  `safeStorage`, con risposte in streaming, annullamento e test di connessione.
 - **Animazioni**: sfondo a reticolo animato, overlay di handshake con radar,
   host in effetto *decrypt*, sequenza dei passi di connessione, gauge e barre
   animati nel monitor. Rispetta `prefers-reduced-motion`.
@@ -74,7 +84,9 @@ src/
     index.ts     ciclo di vita app + finestra
     ssh.ts       gestione sessioni ssh2 (PTY, eventi data/status)
     docker.ts    engine Docker per server (detect, ps, stats, azioni, exec) + riconnessione
-    store.ts     persistenza connessioni + segreti cifrati (safeStorage)
+    ai.ts        orchestratore assistente AI (system prompt contestuale, streaming, annullamento)
+    aiProviders.ts adapter multi-provider (Anthropic SDK, OpenAI/Gemini via fetch SSE) + catalogo
+    store.ts     persistenza connessioni + segreti cifrati (safeStorage), impostazioni e chiavi AI
     ipc.ts       handler IPC
   preload/       bridge sicuro (contextBridge → window.phosphor)
   renderer/      UI React

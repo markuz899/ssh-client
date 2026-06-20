@@ -15,8 +15,16 @@ import {
   listTunnels,
   upsertTunnel,
   deleteTunnel,
+  getAiSettings,
+  setAiSettings,
+  setAiKey,
+  clearAiKey,
+  aiKeyStatus,
   type UpsertInput
 } from './store'
+import { PROVIDERS } from './aiProviders'
+import { sendChat, cancelChat, testProvider } from './ai'
+import type { AiContext, AiMessage, AiSettings } from '../shared/types'
 import type { Connection, ConnectInput, SavedCommand, TunnelConfig } from '../shared/types'
 import { createSession, writeToSession, resizeSession, closeSession } from './ssh'
 import { openMonitor, sampleMonitor, closeMonitor } from './monitor'
@@ -500,6 +508,57 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
 
   ipcMain.handle('docker:exec:close', (_e, execId: string) => {
     closeExec(execId)
+    return ok(true)
+  })
+
+  // ---- AI Assistant ----
+  ipcMain.handle('ai:catalog', () => ok(PROVIDERS))
+  ipcMain.handle('ai:settings:get', () => ok(getAiSettings()))
+  ipcMain.handle('ai:settings:set', (_e, patch: Partial<AiSettings>) => ok(setAiSettings(patch)))
+  ipcMain.handle('ai:keyStatus', () => ok(aiKeyStatus()))
+
+  ipcMain.handle('ai:key:set', (_e, p: { provider: string; key: string }) => {
+    setAiKey(p.provider, p.key)
+    return ok(aiKeyStatus())
+  })
+
+  ipcMain.handle('ai:key:clear', (_e, provider: string) => {
+    clearAiKey(provider)
+    return ok(aiKeyStatus())
+  })
+
+  ipcMain.handle('ai:test', async () => {
+    try {
+      await testProvider()
+      return ok(true)
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle(
+    'ai:send',
+    (_e, p: { requestId: string; messages: AiMessage[]; context?: AiContext }) => {
+      const send = (channel: string, payload: unknown): void => {
+        const win = getWindow()
+        if (win && !win.isDestroyed()) win.webContents.send(channel, payload)
+      }
+      // Fire-and-forget: lo streaming prosegue via eventi; gli errori sono
+      // emessi sul canale 'ai:error'.
+      void sendChat(
+        p.requestId,
+        p.messages,
+        p.context,
+        (requestId, text) => send('ai:delta', { requestId, text }),
+        (requestId) => send('ai:done', { requestId }),
+        (requestId, error) => send('ai:error', { requestId, error })
+      )
+      return ok(true)
+    }
+  )
+
+  ipcMain.handle('ai:cancel', (_e, requestId: string) => {
+    cancelChat(requestId)
     return ok(true)
   })
 }

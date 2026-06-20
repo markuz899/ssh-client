@@ -52,6 +52,7 @@ export type AppView =
   | 'tunnels'
   | 'logs'
   | 'docker'
+  | 'assistant'
 export type SidebarSection = 'connections' | 'commands'
 
 export const VIEWS_WITH_SIDEBAR: AppView[] = ['terminal', 'monitor', 'sftp', 'logs', 'docker']

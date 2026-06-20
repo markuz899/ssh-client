@@ -3,6 +3,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useStore, VIEWS_WITH_SIDEBAR } from './lib/store'
 import { useSettings, hexToRgb, rgbString } from './lib/settings'
 import { initSessionBus, onStatus } from './lib/sessionBus'
+import { initTerminalCapture } from './lib/terminalCapture'
+import { useAi } from './lib/aiStore'
+import { useAiChat } from './lib/aiChat'
 import { onAction, matchAndDispatch, type ActionId } from './lib/shortcuts'
 import SquaresBg from './components/ui/SquaresBg'
 import TitleBar from './components/TitleBar'
@@ -15,6 +18,7 @@ import SftpView from './components/Sftp/SftpView'
 import TunnelsView from './components/Tunnels/TunnelsView'
 import LogsView from './components/Logs/LogsView'
 import DockerView from './components/Docker/DockerView'
+import AssistantView from './components/Assistant/AssistantView'
 import ConnectionForm from './components/ConnectionForm'
 import SettingsPanel from './components/SettingsPanel'
 
@@ -29,8 +33,11 @@ export default function App(): JSX.Element {
 
   useEffect(() => {
     const teardown = initSessionBus()
+    const teardownCapture = initTerminalCapture()
+    const teardownAiChat = useAiChat.getState().init()
     loadConnections()
     loadGlobalCommands()
+    useAi.getState().load()
     window.phosphor.store.encryptionAvailable().then((r) => {
       if (r.ok) setEncryption(r.data)
     })
@@ -54,6 +61,8 @@ export default function App(): JSX.Element {
     return () => {
       offStatus()
       teardown()
+      teardownCapture()
+      teardownAiChat()
     }
   }, [])
 
@@ -161,6 +170,7 @@ export default function App(): JSX.Element {
             {view === 'tunnels' && <TunnelsView />}
             {view === 'logs' && <LogsView />}
             {view === 'docker' && <DockerView />}
+            {view === 'assistant' && <AssistantView />}
             <AnimatePresence>
               {editor.mode !== 'closed' && <ConnectionForm key="editor" />}
             </AnimatePresence>

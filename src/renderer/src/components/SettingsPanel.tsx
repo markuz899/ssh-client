@@ -7,6 +7,7 @@ import {
   type BackgroundPreset
 } from '../lib/settings'
 import { ACTIONS, eventToCombo, formatCombo, type ActionId, type ActionMeta } from '../lib/shortcuts'
+import AiSettingsSection from './Assistant/AiSettingsSection'
 
 export default function SettingsPanel(): JSX.Element {
   const s = useSettings()
@@ -119,6 +120,11 @@ export default function SettingsPanel(): JSX.Element {
             <p className="mt-1 font-mono text-[10px] text-ink-faint">
               Si applica ai terminali aperti da ora in poi.
             </p>
+          </Section>
+
+          {/* Assistente AI */}
+          <Section title="assistente AI">
+            <AiSettingsSection />
           </Section>
 
           {/* Scorciatoie */}

@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 import type {
   AiKeyStatus,
   AiSettings,
+  ConfigBundle,
   Connection,
   SavedCommand,
   TunnelConfig
@@ -253,4 +254,53 @@ export function aiKeyStatus(): AiKeyStatus {
   const status: AiKeyStatus = {}
   for (const provider of Object.keys(keys)) status[provider] = Boolean(keys[provider])
   return status
+}
+
+// ---- Backup / ripristino ----
+
+/** Esporta tutta la configurazione con i segreti DECIFRATI (da cifrare poi col
+ *  backup, mai scritti in chiaro su disco). */
+export function exportStore(): ConfigBundle {
+  const connections = store.get('connections')
+  const secrets: ConfigBundle['secrets'] = {}
+  for (const c of connections) {
+    const s = readSecret(c.id)
+    if (s.privateKey || s.passphrase || s.password) secrets[c.id] = s
+  }
+  const aiKeys: Record<string, string> = {}
+  for (const provider of Object.keys(store.get('aiKeys'))) {
+    const k = getAiKey(provider)
+    if (k) aiKeys[provider] = k
+  }
+  return {
+    connections,
+    secrets,
+    globalCommands: store.get('globalCommands'),
+    tunnels: store.get('tunnels'),
+    aiSettings: getAiSettings(),
+    aiKeys
+  }
+}
+
+/** Ripristina la configurazione, ri-cifrando i segreti con il portachiavi
+ *  locale. Sostituisce completamente i dati esistenti. */
+export function importStore(bundle: ConfigBundle): void {
+  if (Array.isArray(bundle.connections)) store.set('connections', bundle.connections)
+  if (bundle.secrets && typeof bundle.secrets === 'object') {
+    const out: Record<string, string> = {}
+    for (const [id, secret] of Object.entries(bundle.secrets)) {
+      out[id] = encrypt(JSON.stringify(secret))
+    }
+    store.set('secrets', out)
+  }
+  if (Array.isArray(bundle.globalCommands)) store.set('globalCommands', bundle.globalCommands)
+  if (Array.isArray(bundle.tunnels)) store.set('tunnels', bundle.tunnels)
+  if (bundle.aiSettings) store.set('aiSettings', { ...DEFAULT_AI_SETTINGS, ...bundle.aiSettings })
+  if (bundle.aiKeys && typeof bundle.aiKeys === 'object') {
+    const out: Record<string, string> = {}
+    for (const [provider, key] of Object.entries(bundle.aiKeys)) {
+      if (key) out[provider] = encrypt(key)
+    }
+    store.set('aiKeys', out)
+  }
 }

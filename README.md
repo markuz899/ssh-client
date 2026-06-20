@@ -53,6 +53,12 @@ ssh -i effatta.pem effatta@52.166.113.244
   OpenAI (GPT), Google (Gemini) e endpoint compatibili OpenAI in locale (Ollama,
   LM Studio). Le **API key** dei modelli a pagamento sono salvate cifrate via
   `safeStorage`, con risposte in streaming, annullamento e test di connessione.
+- **Backup e ripristino**: dalle Impostazioni esporti tutta la configurazione —
+  connessioni, segreti, comandi, tunnel, impostazioni, chiavi AI e cronologia chat —
+  in un unico file `.json` **cifrato con una passphrase** (AES-256-GCM, chiave
+  derivata con scrypt). I segreti, normalmente legati al portachiavi della macchina,
+  vengono decifrati nel backup e **ri-cifrati col portachiavi locale al ripristino**:
+  così puoi riportare tutto su un altro PC.
 - **Animazioni**: sfondo a reticolo animato, overlay di handshake con radar,
   host in effetto *decrypt*, sequenza dei passi di connessione, gauge e barre
   animati nel monitor. Rispetta `prefers-reduced-motion`.

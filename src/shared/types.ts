@@ -344,3 +344,32 @@ export interface AiStreamErrorEvent {
 
 /** Quali provider hanno una chiave salvata (per id provider). */
 export type AiKeyStatus = Record<string, boolean>
+
+// ---- Backup / ripristino configurazione ----
+
+/** Segreto di una connessione, in chiaro (solo dentro un backup cifrato). */
+export interface ConfigSecret {
+  privateKey?: string
+  passphrase?: string
+  password?: string
+}
+
+/** Tutta la configurazione gestita dal processo main (store). */
+export interface ConfigBundle {
+  connections: Connection[]
+  /** connectionId -> segreti decifrati. */
+  secrets: Record<string, ConfigSecret>
+  globalCommands: SavedCommand[]
+  tunnels: TunnelConfig[]
+  aiSettings: AiSettings
+  /** providerId -> API key decifrata. */
+  aiKeys: Record<string, string>
+}
+
+/** Contenuto del file di backup (prima della cifratura con passphrase). */
+export interface BackupPayload {
+  meta: { app: string; version: number; exportedAt: number }
+  store: ConfigBundle
+  /** Dati del renderer (localStorage): aspetto, layout, chat AI. */
+  local: Record<string, string>
+}

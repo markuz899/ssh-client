@@ -20,8 +20,12 @@ import {
   setAiKey,
   clearAiKey,
   aiKeyStatus,
+  exportStore,
+  importStore,
   type UpsertInput
 } from './store'
+import { encryptBundle, decryptBundle } from './backup'
+import type { BackupPayload } from '../shared/types'
 import { PROVIDERS } from './aiProviders'
 import { sendChat, cancelChat, testProvider } from './ai'
 import type { AiContext, AiMessage, AiSettings } from '../shared/types'
@@ -560,5 +564,58 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('ai:cancel', (_e, requestId: string) => {
     cancelChat(requestId)
     return ok(true)
+  })
+
+  // ---- Backup / ripristino configurazione ----
+  ipcMain.handle(
+    'config:export',
+    async (_e, p: { passphrase: string; local: Record<string, string> }) => {
+      try {
+        if (!p.passphrase || p.passphrase.length < 8) {
+          return fail('La passphrase deve avere almeno 8 caratteri.')
+        }
+        const win = getWindow()
+        if (!win) return fail('Finestra non disponibile')
+        const payload: BackupPayload = {
+          meta: { app: 'AetherSSH', version: 1, exportedAt: Date.now() },
+          store: exportStore(),
+          local: p.local ?? {}
+        }
+        const content = encryptBundle(payload, p.passphrase)
+        const date = new Date().toISOString().slice(0, 10)
+        const res = await dialog.showSaveDialog(win, {
+          title: 'Esporta configurazione',
+          defaultPath: `aetherssh-backup-${date}.json`,
+          filters: [{ name: 'Backup AetherSSH', extensions: ['json'] }]
+        })
+        if (res.canceled || !res.filePath) return ok(false)
+        await writeFile(res.filePath, content, 'utf8')
+        return ok(true)
+      } catch (e) {
+        return fail(e)
+      }
+    }
+  )
+
+  ipcMain.handle('config:import', async (_e, p: { passphrase: string }) => {
+    try {
+      const win = getWindow()
+      if (!win) return fail('Finestra non disponibile')
+      const res = await dialog.showOpenDialog(win, {
+        title: 'Importa configurazione',
+        properties: ['openFile'],
+        filters: [{ name: 'Backup AetherSSH', extensions: ['json'] }]
+      })
+      if (res.canceled || res.filePaths.length === 0) return ok(null)
+      const content = await readFile(res.filePaths[0], 'utf8')
+      const payload = decryptBundle<BackupPayload>(content, p.passphrase)
+      if (!payload?.store || !Array.isArray(payload.store.connections)) {
+        return fail('Il file non contiene una configurazione valida.')
+      }
+      importStore(payload.store)
+      return ok({ local: payload.local ?? {} })
+    } catch (e) {
+      return fail(e)
+    }
   })
 }

@@ -8,6 +8,7 @@ import {
 } from '../lib/settings'
 import { ACTIONS, eventToCombo, formatCombo, type ActionId, type ActionMeta } from '../lib/shortcuts'
 import AiSettingsSection from './Assistant/AiSettingsSection'
+import BackupSection from './BackupSection'
 
 export default function SettingsPanel(): JSX.Element {
   const s = useSettings()
@@ -125,6 +126,11 @@ export default function SettingsPanel(): JSX.Element {
           {/* Assistente AI */}
           <Section title="assistente AI">
             <AiSettingsSection />
+          </Section>
+
+          {/* Backup / ripristino */}
+          <Section title="backup e ripristino">
+            <BackupSection />
           </Section>
 
           {/* Scorciatoie */}

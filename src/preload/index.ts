@@ -244,6 +244,14 @@ const api = {
       ipcRenderer.on('ai:error', listener)
       return () => ipcRenderer.removeListener('ai:error', listener)
     }
+  },
+  config: {
+    export: (passphrase: string, local: Record<string, string>): Promise<IpcResult<boolean>> =>
+      ipcRenderer.invoke('config:export', { passphrase, local }),
+    import: (
+      passphrase: string
+    ): Promise<IpcResult<{ local: Record<string, string> } | null>> =>
+      ipcRenderer.invoke('config:import', { passphrase })
   }
 }
 

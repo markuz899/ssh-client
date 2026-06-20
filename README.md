@@ -25,16 +25,24 @@ ssh -i effatta.pem effatta@52.166.113.244
   Puoi anche definire un **comando all'avvio** eseguito automaticamente.
 - **Parse rapido**: incolla una riga `ssh -i chiave.pem utente@host -p 2222` nel
   form e i campi si compilano da soli.
-- **Sei sezioni** dalla barra di navigazione a sinistra: **Home** (panoramica
+- **Sette sezioni** dalla barra di navigazione a sinistra: **Home** (panoramica
   di tutte le connessioni con ping di raggiungibilità live e azioni rapide),
   **Terminali**, **Monitor**, **File** (gestore SFTP con drag&drop, download,
-  crea file/cartella, editor remoto), **Tunnel** (port forwarding locale/remoto)
-  e **Logs** (stream `tail -f` in tempo reale, indipendenti per sessione, con
-  filtro per testo/livello, ricerca, pausa, svuota ed esporta).
+  crea file/cartella, editor remoto), **Tunnel** (port forwarding locale/remoto),
+  **Logs** (stream `tail -f` in tempo reale, indipendenti per sessione, con
+  filtro per testo/livello, ricerca, pausa, svuota ed esporta) e **Docker**.
 - **Monitoraggio server**: apre una connessione SSH dedicata e mostra in tempo reale —
   con polling ogni 2,5s — uso CPU (anello + storico), RAM e swap, carico medio
   (1/5/15m), dischi e i processi top per CPU. Legge `/proc` via `exec`, senza
   shell interattiva, quindi non interferisce con i terminali aperti.
+- **Docker**: rileva automaticamente Docker sul server (versione engine, stato del
+  daemon e permessi) e mostra una dashboard con l'elenco dei container — stato,
+  uptime, porte e uso risorse (`docker stats`) aggiornati in tempo reale ogni 3s.
+  Azioni rapide per container (**Start / Stop / Restart / Remove**), **log in
+  diretta** (`docker logs -f`), **shell interattiva** dentro al container
+  (`docker exec -it`) e un pannello statistiche dettagliato. Ogni sessione Docker
+  usa una connessione SSH dedicata con **riconnessione automatica**, timeout sui
+  comandi e gestione degli errori.
 - **Animazioni**: sfondo a reticolo animato, overlay di handshake con radar,
   host in effetto *decrypt*, sequenza dei passi di connessione, gauge e barre
   animati nel monitor. Rispetta `prefers-reduced-motion`.
@@ -65,6 +73,7 @@ src/
   main/          processo main Electron
     index.ts     ciclo di vita app + finestra
     ssh.ts       gestione sessioni ssh2 (PTY, eventi data/status)
+    docker.ts    engine Docker per server (detect, ps, stats, azioni, exec) + riconnessione
     store.ts     persistenza connessioni + segreti cifrati (safeStorage)
     ipc.ts       handler IPC
   preload/       bridge sicuro (contextBridge → window.phosphor)

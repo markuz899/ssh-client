@@ -44,10 +44,17 @@ export type EditorState =
   | { mode: 'new' }
   | { mode: 'edit'; connection: Connection }
 
-export type AppView = 'dashboard' | 'terminal' | 'monitor' | 'sftp' | 'tunnels' | 'logs'
+export type AppView =
+  | 'dashboard'
+  | 'terminal'
+  | 'monitor'
+  | 'sftp'
+  | 'tunnels'
+  | 'logs'
+  | 'docker'
 export type SidebarSection = 'connections' | 'commands'
 
-export const VIEWS_WITH_SIDEBAR: AppView[] = ['terminal', 'monitor', 'sftp', 'logs']
+export const VIEWS_WITH_SIDEBAR: AppView[] = ['terminal', 'monitor', 'sftp', 'logs', 'docker']
 
 // ---- Layout salvabili ----
 type SnapNode =
@@ -81,6 +88,7 @@ interface AppState {
   monitorTargetId?: string
   sftpTargetId?: string
   logsTargetId?: string
+  dockerTargetId?: string
   sidebarCollapsed: boolean
   sidebarSection: SidebarSection
   globalCommands: SavedCommand[]
@@ -98,6 +106,7 @@ interface AppState {
   setMonitorTarget: (id?: string) => void
   setSftpTarget: (id?: string) => void
   setLogsTarget: (id?: string) => void
+  setDockerTarget: (id?: string) => void
   toggleSidebar: () => void
   setSidebarSection: (s: SidebarSection) => void
   setTabsOrder: (tabs: Tab[]) => void
@@ -190,6 +199,7 @@ export const useStore = create<AppState>((set, get) => {
     monitorTargetId: undefined,
     sftpTargetId: undefined,
     logsTargetId: undefined,
+    dockerTargetId: undefined,
     sidebarCollapsed: false,
     sidebarSection: 'connections',
     globalCommands: [],
@@ -218,6 +228,7 @@ export const useStore = create<AppState>((set, get) => {
     setMonitorTarget: (id) => set({ monitorTargetId: id }),
     setSftpTarget: (id) => set({ sftpTargetId: id }),
     setLogsTarget: (id) => set({ logsTargetId: id }),
+    setDockerTarget: (id) => set({ dockerTargetId: id }),
     toggleSidebar: () => set((st) => ({ sidebarCollapsed: !st.sidebarCollapsed })),
     setSidebarSection: (sidebarSection) => set({ sidebarSection }),
     setTabsOrder: (tabs) => set({ tabs }),

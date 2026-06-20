@@ -184,3 +184,91 @@ export interface LogStatusEvent {
   status: LogStatus
   message?: string
 }
+
+// ---- Docker ----
+
+/** Esito del rilevamento di Docker sul server remoto. */
+export interface DockerInfo {
+  /** Il binario `docker` è presente nel PATH. */
+  installed: boolean
+  /** L'utente riesce a parlare col daemon (socket raggiungibile, permessi ok). */
+  canConnect: boolean
+  /** Versione del Docker Engine (server), se interrogabile. */
+  serverVersion?: string
+  /** Diagnostica leggibile in caso di problema (daemon spento, permessi…). */
+  message?: string
+}
+
+export type DockerState =
+  | 'running'
+  | 'exited'
+  | 'paused'
+  | 'created'
+  | 'restarting'
+  | 'removing'
+  | 'dead'
+  | 'unknown'
+
+export interface DockerPort {
+  ip?: string
+  privatePort: number
+  publicPort?: number
+  /** tcp | udp */
+  protocol: string
+}
+
+export interface DockerContainer {
+  /** ID completo (64 char) del container. */
+  id: string
+  name: string
+  image: string
+  state: DockerState
+  /** Stato grezzo, es. "Up 3 hours (healthy)". */
+  status: string
+  ports: DockerPort[]
+  /** Epoch ms della creazione, 0 se non interpretabile. */
+  createdAt: number
+  command: string
+}
+
+export interface DockerStats {
+  /** ID (eventualmente abbreviato) restituito da `docker stats`. */
+  id: string
+  name: string
+  cpuPercent: number
+  memPercent: number
+  memUsedBytes: number
+  memLimitBytes: number
+  netRxBytes: number
+  netTxBytes: number
+  blockReadBytes: number
+  blockWriteBytes: number
+  pids: number
+}
+
+export type DockerContainerAction = 'start' | 'stop' | 'restart' | 'remove'
+
+export type DockerEngineStatus = 'connecting' | 'ready' | 'error'
+
+export interface DockerEngineStatusEvent {
+  engineId: string
+  status: DockerEngineStatus
+  message?: string
+  /** Tentativo di riconnessione in corso (0 = connessione iniziale). */
+  attempt?: number
+}
+
+// ---- Shell interattiva dentro un container (docker exec -it) ----
+
+export type DockerExecStatus = 'connecting' | 'ready' | 'closed' | 'error'
+
+export interface DockerExecDataEvent {
+  execId: string
+  data: string
+}
+
+export interface DockerExecStatusEvent {
+  execId: string
+  status: DockerExecStatus
+  message?: string
+}

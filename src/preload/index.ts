@@ -13,7 +13,14 @@ import type {
   TunnelConfig,
   TunnelStatusEvent,
   LogDataEvent,
-  LogStatusEvent
+  LogStatusEvent,
+  DockerInfo,
+  DockerContainer,
+  DockerStats,
+  DockerContainerAction,
+  DockerEngineStatusEvent,
+  DockerExecDataEvent,
+  DockerExecStatusEvent
 } from '../shared/types'
 
 interface UpsertInput {
@@ -150,6 +157,49 @@ const api = {
       const listener = (_: unknown, e: LogStatusEvent): void => cb(e)
       ipcRenderer.on('logs:status', listener)
       return () => ipcRenderer.removeListener('logs:status', listener)
+    }
+  },
+  docker: {
+    open: (input: ConnectInput): Promise<IpcResult<{ engineId: string }>> =>
+      ipcRenderer.invoke('docker:open', input),
+    detect: (engineId: string): Promise<IpcResult<DockerInfo>> =>
+      ipcRenderer.invoke('docker:detect', engineId),
+    list: (engineId: string): Promise<IpcResult<DockerContainer[]>> =>
+      ipcRenderer.invoke('docker:list', engineId),
+    stats: (engineId: string): Promise<IpcResult<DockerStats[]>> =>
+      ipcRenderer.invoke('docker:stats', engineId),
+    action: (
+      engineId: string,
+      action: DockerContainerAction,
+      containerId: string
+    ): Promise<IpcResult<boolean>> =>
+      ipcRenderer.invoke('docker:action', { engineId, action, containerId }),
+    close: (engineId: string): Promise<IpcResult<boolean>> =>
+      ipcRenderer.invoke('docker:close', engineId),
+    onStatus: (cb: (e: DockerEngineStatusEvent) => void): (() => void) => {
+      const listener = (_: unknown, e: DockerEngineStatusEvent): void => cb(e)
+      ipcRenderer.on('docker:status', listener)
+      return () => ipcRenderer.removeListener('docker:status', listener)
+    },
+    exec: {
+      open: (input: ConnectInput, containerId: string): Promise<IpcResult<{ execId: string }>> =>
+        ipcRenderer.invoke('docker:exec:open', { input, containerId }),
+      write: (execId: string, data: string): void =>
+        ipcRenderer.send('docker:exec:write', { execId, data }),
+      resize: (execId: string, cols: number, rows: number): void =>
+        ipcRenderer.send('docker:exec:resize', { execId, cols, rows }),
+      close: (execId: string): Promise<IpcResult<boolean>> =>
+        ipcRenderer.invoke('docker:exec:close', execId),
+      onData: (cb: (e: DockerExecDataEvent) => void): (() => void) => {
+        const listener = (_: unknown, e: DockerExecDataEvent): void => cb(e)
+        ipcRenderer.on('docker:exec:data', listener)
+        return () => ipcRenderer.removeListener('docker:exec:data', listener)
+      },
+      onStatus: (cb: (e: DockerExecStatusEvent) => void): (() => void) => {
+        const listener = (_: unknown, e: DockerExecStatusEvent): void => cb(e)
+        ipcRenderer.on('docker:exec:status', listener)
+        return () => ipcRenderer.removeListener('docker:exec:status', listener)
+      }
     }
   }
 }

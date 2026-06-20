@@ -24,6 +24,8 @@ export default function Sidebar(): JSX.Element {
     setSftpTarget,
     logsTargetId,
     setLogsTarget,
+    dockerTargetId,
+    setDockerTarget,
     sidebarSection,
     setSidebarSection
   } = useStore()
@@ -36,9 +38,19 @@ export default function Sidebar(): JSX.Element {
         ? sftpTargetId
         : view === 'logs'
           ? logsTargetId
-          : undefined
+          : view === 'docker'
+            ? dockerTargetId
+            : undefined
   const actionLabel =
-    view === 'monitor' ? 'monitora' : view === 'sftp' ? 'apri' : view === 'logs' ? 'log' : 'collega'
+    view === 'monitor'
+      ? 'monitora'
+      : view === 'sftp'
+        ? 'apri'
+        : view === 'logs'
+          ? 'log'
+          : view === 'docker'
+            ? 'docker'
+            : 'collega'
   const headerLabel =
     view === 'terminal' ? 'le tue destinazioni' : 'scegli un server'
 
@@ -63,6 +75,7 @@ export default function Sidebar(): JSX.Element {
     if (view === 'monitor') setMonitorTarget(c.id)
     else if (view === 'sftp') setSftpTarget(c.id)
     else if (view === 'logs') setLogsTarget(c.id)
+    else if (view === 'docker') setDockerTarget(c.id)
     else connect(c)
   }
 

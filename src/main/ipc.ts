@@ -36,6 +36,19 @@ import {
 } from './sftp'
 import { startTunnel, stopTunnel, isActive } from './tunnels'
 import { startLog, stopLog } from './logs'
+import {
+  openDocker,
+  detectDocker,
+  listContainers,
+  statsContainers,
+  containerAction,
+  closeDocker,
+  openExec,
+  writeExec,
+  resizeExec,
+  closeExec
+} from './docker'
+import type { DockerContainerAction } from '../shared/types'
 
 function ok<T>(data: T): IpcResult<T> {
   return { ok: true, data }
@@ -395,5 +408,98 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
     } catch (e) {
       return fail(e)
     }
+  })
+
+  // ---- Docker ----
+  ipcMain.handle('docker:open', (_e, input: ConnectInput) => {
+    try {
+      const engineId = openDocker(withStoredSecrets(input), (id, status, message, attempt) => {
+        const win = getWindow()
+        if (!win || win.isDestroyed()) return
+        win.webContents.send('docker:status', { engineId: id, status, message, attempt })
+      })
+      return ok({ engineId })
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('docker:detect', async (_e, engineId: string) => {
+    try {
+      return ok(await detectDocker(engineId))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('docker:list', async (_e, engineId: string) => {
+    try {
+      return ok(await listContainers(engineId))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle('docker:stats', async (_e, engineId: string) => {
+    try {
+      return ok(await statsContainers(engineId))
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.handle(
+    'docker:action',
+    async (_e, p: { engineId: string; action: DockerContainerAction; containerId: string }) => {
+      try {
+        await containerAction(p.engineId, p.action, p.containerId)
+        return ok(true)
+      } catch (e) {
+        return fail(e)
+      }
+    }
+  )
+
+  ipcMain.handle('docker:close', (_e, engineId: string) => {
+    closeDocker(engineId)
+    return ok(true)
+  })
+
+  // ---- Docker exec (shell interattiva) ----
+  ipcMain.handle('docker:exec:open', (_e, p: { input: ConnectInput; containerId: string }) => {
+    try {
+      const execId = openExec(
+        withStoredSecrets(p.input),
+        p.containerId,
+        (id, data) => {
+          const win = getWindow()
+          if (win && !win.isDestroyed()) win.webContents.send('docker:exec:data', { execId: id, data })
+        },
+        (id, status, message) => {
+          const win = getWindow()
+          if (win && !win.isDestroyed())
+            win.webContents.send('docker:exec:status', { execId: id, status, message })
+        }
+      )
+      return ok({ execId })
+    } catch (e) {
+      return fail(e)
+    }
+  })
+
+  ipcMain.on('docker:exec:write', (_e: IpcMainEvent, p: { execId: string; data: string }) => {
+    writeExec(p.execId, p.data)
+  })
+
+  ipcMain.on(
+    'docker:exec:resize',
+    (_e: IpcMainEvent, p: { execId: string; cols: number; rows: number }) => {
+      resizeExec(p.execId, p.cols, p.rows)
+    }
+  )
+
+  ipcMain.handle('docker:exec:close', (_e, execId: string) => {
+    closeExec(execId)
+    return ok(true)
   })
 }

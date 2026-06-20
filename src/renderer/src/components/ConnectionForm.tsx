@@ -156,7 +156,7 @@ export default function ConnectionForm(): JSX.Element {
                   value={quick}
                   onChange={(e) => setQuick(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && applyQuick()}
-                  placeholder="ssh -i effatta.pem effatta@52.166.113.244"
+                  placeholder="ssh -i deploy.pem deploy@203.0.113.10"
                   className={inputCls + ' flex-1 font-mono'}
                 />
                 <button onClick={applyQuick} className={ghostBtn}>
@@ -168,7 +168,7 @@ export default function ConnectionForm(): JSX.Element {
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="nome" full={false}>
-              <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="effatta-prod" />
+              <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="web-prod" />
             </Field>
             <Field label="colore" full={false}>
               <div className="flex items-center gap-1.5 pt-1">
@@ -187,12 +187,12 @@ export default function ConnectionForm(): JSX.Element {
           </div>
 
           <Field label="descrizione">
-            <input value={description} onChange={(e) => setDescription(e.target.value)} className={inputCls} placeholder="Server di produzione effatta" />
+            <input value={description} onChange={(e) => setDescription(e.target.value)} className={inputCls} placeholder="Server di produzione web" />
           </Field>
 
           <div className="grid grid-cols-[1fr,90px] gap-3">
             <Field label="host / ip">
-              <input value={host} onChange={(e) => setHost(e.target.value)} className={inputCls + ' font-mono'} placeholder="52.166.113.244" />
+              <input value={host} onChange={(e) => setHost(e.target.value)} className={inputCls + ' font-mono'} placeholder="203.0.113.10" />
             </Field>
             <Field label="porta">
               <input value={port} onChange={(e) => setPort(e.target.value.replace(/\D/g, ''))} className={inputCls + ' font-mono'} placeholder="22" />
@@ -200,7 +200,7 @@ export default function ConnectionForm(): JSX.Element {
           </div>
 
           <Field label="utente">
-            <input value={username} onChange={(e) => setUsername(e.target.value)} className={inputCls + ' font-mono'} placeholder="effatta" />
+            <input value={username} onChange={(e) => setUsername(e.target.value)} className={inputCls + ' font-mono'} placeholder="deploy" />
           </Field>
 
           {/* Metodo di autenticazione */}
@@ -270,7 +270,7 @@ export default function ConnectionForm(): JSX.Element {
               value={startupCommand}
               onChange={(e) => setStartupCommand(e.target.value)}
               className={inputCls + ' font-mono'}
-              placeholder="cd /var/www/effatta && ls"
+              placeholder="cd /var/www/app && ls"
             />
           </Field>
 
@@ -303,7 +303,7 @@ export default function ConnectionForm(): JSX.Element {
                     value={cmd.command}
                     onChange={(e) => updateCommand(cmd.id, { command: e.target.value })}
                     className={inputCls + ' font-mono py-1 text-[12px]'}
-                    placeholder="sudo systemctl status effatta"
+                    placeholder="sudo systemctl status nginx"
                   />
                   <label className="mt-1.5 flex items-center gap-2 font-mono text-[10px] text-ink-dim">
                     <input

@@ -298,7 +298,7 @@ export default function SftpBrowser({ connection }: { connection: Connection }):
               if (e.key === 'Escape') setEditingPath(null)
             }}
             onBlur={() => setEditingPath(null)}
-            placeholder="/var/www/effatta"
+            placeholder="/var/www/app"
             className="min-w-0 flex-1 rounded-md border border-phosphor/50 bg-void/60 px-2.5 py-1 font-mono text-[12px] text-ink outline-none"
           />
         ) : (

@@ -4,7 +4,7 @@ Client SSH desktop (Electron + React) con terminale multi-tab, connessioni
 salvate e un'interfaccia "terminal neon / cyber". Costruito per il flusso tipo:
 
 ```bash
-ssh -i effatta.pem effatta@52.166.113.244
+ssh -i deploy.pem deploy@203.0.113.10
 ```
 
 ## Cosa fa

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "AetherSSH — un client SSH desktop con terminale multi-tab, monitoraggio, Docker, assistente AI e UI cyber.",
   "main": "./out/main/index.js",
-  "author": "effatta",
+  "author": "AetherSSH",
   "license": "MIT",
   "scripts": {
     "dev": "electron-vite dev",
@@ -20,7 +20,7 @@
     "dist:linux": "npm run build && electron-builder --linux"
   },
   "build": {
-    "appId": "com.effatta.aetherssh",
+    "appId": "com.aetherssh.app",
     "productName": "AetherSSH",
     "directories": {
       "buildResources": "build"

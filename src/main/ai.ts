@@ -10,7 +10,7 @@ type EmitError = (requestId: string, error: string) => void
 const inflight = new Map<string, AbortController>()
 
 const BASE_SYSTEM = [
-  "Sei l'assistente AI integrato in Phosphor, un client SSH desktop.",
+  "Sei l'assistente AI integrato in AetherSSH, un client SSH desktop.",
   "Aiuti l'utente ad amministrare server remoti Linux: analizzi l'output del",
   'terminale, spieghi gli errori, generi comandi Linux, Docker e Kubernetes a',
   'partire dal linguaggio naturale e proponi soluzioni di troubleshooting.',

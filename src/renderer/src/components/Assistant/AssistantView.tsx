@@ -8,6 +8,7 @@ import { useSettings } from '../../lib/settings'
 import { getTerminalTail } from '../../lib/terminalCapture'
 import { formatBytesFromKb, formatUptime } from '../../lib/format'
 import MessageItem from './MessageItem'
+import ConversationList from './ConversationList'
 
 function inputFor(c: Connection): ConnectInput {
   return {
@@ -55,8 +56,23 @@ export default function AssistantView(): JSX.Element {
   const settings = useAi((s) => s.settings)
   const ready = useAi((s) => s.isReady())
   const info = useAi((s) => s.providerInfo())
-  const { messages, streaming, send, cancel, reset } = useAiChat()
+  const {
+    conversations,
+    activeId,
+    inflight,
+    send,
+    cancelActive,
+    newChat,
+    selectChat,
+    deleteChat,
+    renameChat
+  } = useAiChat()
   const openSettings = useSettings((s) => s.setOpen)
+
+  const active = conversations.find((c) => c.id === activeId)
+  const messages = active?.messages ?? []
+  const streamingIds = new Set(Object.values(inflight))
+  const streaming = activeId ? streamingIds.has(activeId) : false
 
   const tab = tabs.find((t) => t.id === activeTabId)
   const pane = tab ? panes[tab.activePaneId] : undefined
@@ -75,9 +91,10 @@ export default function AssistantView(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.autoIncludeTerminal, hasSession])
 
+  const lastContent = messages[messages.length - 1]?.content
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [messages])
+  }, [activeId, messages.length, lastContent])
 
   const submit = async (raw?: string): Promise<void> => {
     const value = (raw ?? text).trim()
@@ -110,30 +127,34 @@ export default function AssistantView(): JSX.Element {
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      {/* Intestazione */}
-      <div className="flex items-center justify-between gap-3 border-b border-line bg-panel/50 px-5 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-phosphor/40 bg-phosphor/10 text-lg text-phosphor text-glow">
-            ✦
-          </div>
-          <div>
-            <h2 className="font-display text-lg text-ink">Assistente AI</h2>
-            <div className="font-mono text-[11px] text-ink-dim">
-              {info ? info.label : 'provider non configurato'}
-              {settings?.model && <span className="text-ink-faint"> · {settings.model}</span>}
+    <div className="flex flex-1 overflow-hidden">
+      <ConversationList
+        conversations={conversations}
+        activeId={activeId}
+        streamingIds={streamingIds}
+        onSelect={selectChat}
+        onNew={newChat}
+        onDelete={deleteChat}
+        onRename={renameChat}
+      />
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Intestazione */}
+        <div className="flex items-center justify-between gap-3 border-b border-line bg-panel/50 px-5 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-phosphor/40 bg-phosphor/10 text-lg text-phosphor text-glow">
+              ✦
+            </div>
+            <div>
+              <h2 className="font-display text-lg text-ink">
+                {active?.title || 'Assistente AI'}
+              </h2>
+              <div className="font-mono text-[11px] text-ink-dim">
+                {info ? info.label : 'provider non configurato'}
+                {settings?.model && <span className="text-ink-faint"> · {settings.model}</span>}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {messages.length > 0 && (
-            <button
-              onClick={reset}
-              className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-ink-dim transition hover:border-danger/40 hover:text-danger"
-            >
-              ⌫ nuova chat
-            </button>
-          )}
           <button
             onClick={() => openSettings(true)}
             className="rounded-md border border-line px-3 py-1.5 font-mono text-[11px] text-ink-dim transition hover:border-phosphor/40 hover:text-phosphor"
@@ -141,9 +162,8 @@ export default function AssistantView(): JSX.Element {
             ⚙ configura
           </button>
         </div>
-      </div>
 
-      {/* Corpo conversazione */}
+        {/* Corpo conversazione */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5">
         {messages.length === 0 ? (
           <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center text-center">
@@ -232,7 +252,7 @@ export default function AssistantView(): JSX.Element {
             />
             {streaming || preparing ? (
               <button
-                onClick={cancel}
+                onClick={cancelActive}
                 className="flex h-[42px] items-center rounded-lg border border-danger/40 bg-danger/10 px-4 font-mono text-[12px] text-danger transition hover:bg-danger/20"
               >
                 ■ stop
@@ -250,6 +270,7 @@ export default function AssistantView(): JSX.Element {
           <div className="mt-1.5 font-mono text-[10px] text-ink-faint">
             Invio per inviare · Shift+Invio per andare a capo
           </div>
+        </div>
         </div>
       </div>
     </div>

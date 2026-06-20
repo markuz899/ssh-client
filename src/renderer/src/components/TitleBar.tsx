@@ -7,9 +7,9 @@ export default function TitleBar(): JSX.Element {
   return (
     <header className="drag flex h-11 shrink-0 items-center gap-3 border-b border-line bg-panel/50 pl-[88px] pr-4">
       <div className="flex items-center gap-2">
-        <span className="font-mono text-base text-phosphor text-glow">⌁</span>
+        <span className="font-mono text-base text-phosphor text-glow">Λ</span>
         <span className="font-display text-[13px] font-bold tracking-wide text-ink">
-          PHOSPHOR
+          AETHER
         </span>
         <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink-faint">
           ssh

@@ -1,4 +1,4 @@
-# Phosphor SSH
+# AetherSSH
 
 Client SSH desktop (Electron + React) con terminale multi-tab, connessioni
 salvate e un'interfaccia "terminal neon / cyber". Costruito per il flusso tipo:
@@ -73,7 +73,12 @@ npm run typecheck  # controllo tipi main + renderer
 npm run build      # bundle di produzione in ./out
 npm run start      # anteprima del bundle
 npm run build:mac  # pacchetto .app/.dmg (richiede electron-builder)
+npm run icons      # rigenera build/icon.png e build/icon.icns dal master SVG
 ```
+
+L'icona dell'app è disegnata in `build/icon.svg` (stile neon/cyber, coerente con
+la UI) e rasterizzata via `npm run icons` in `build/icon.{png,icns}`, usati da
+electron-builder.
 
 ## Architettura
 

@@ -1,13 +1,14 @@
 {
-  "name": "phosphor-ssh",
+  "name": "aether-ssh",
   "version": "0.1.0",
-  "description": "Phosphor — un client SSH desktop con terminale multi-tab, connessioni salvate e UI cyber.",
+  "description": "AetherSSH — un client SSH desktop con terminale multi-tab, monitoraggio, Docker, assistente AI e UI cyber.",
   "main": "./out/main/index.js",
   "author": "effatta",
   "license": "MIT",
   "scripts": {
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
+    "icons": "node scripts/make-icons.mjs",
     "build": "electron-vite build",
     "build:mac": "electron-vite build && electron-builder --mac",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
@@ -18,6 +19,27 @@
     "dist:win": "npm run build && electron-builder --win",
     "dist:linux": "npm run build && electron-builder --linux"
   },
+  "build": {
+    "appId": "com.effatta.aetherssh",
+    "productName": "AetherSSH",
+    "directories": {
+      "buildResources": "build"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "Development"
+    }
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
     "electron-store": "^8.2.0",
@@ -27,6 +49,7 @@
     "@fontsource/inter": "^5.0.18",
     "@fontsource/jetbrains-mono": "^5.0.20",
     "@fontsource/space-grotesk": "^5.0.18",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^20.12.7",
     "@types/react": "^18.2.79",
     "@types/react-dom": "^18.2.25",

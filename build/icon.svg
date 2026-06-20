@@ -1,0 +1,94 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Sfondo del riquadro -->
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0C1426"/>
+      <stop offset="1" stop-color="#05080F"/>
+    </linearGradient>
+    <!-- Bagliore radiale dietro il marchio -->
+    <radialGradient id="halo" cx="0.5" cy="0.46" r="0.55">
+      <stop offset="0" stop-color="#5EF6FF" stop-opacity="0.30"/>
+      <stop offset="0.55" stop-color="#5EF6FF" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#5EF6FF" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Gradiente neon delle aste (ciano -> verde matrix).
+         userSpaceOnUse: indispensabile perché la traversa orizzontale (bbox di
+         altezza 0) altrimenti non verrebbe dipinta. -->
+    <linearGradient id="neon" gradientUnits="userSpaceOnUse" x1="512" y1="322" x2="512" y2="716">
+      <stop offset="0" stop-color="#9CFBFF"/>
+      <stop offset="0.45" stop-color="#5EF6FF"/>
+      <stop offset="1" stop-color="#5BF08A"/>
+    </linearGradient>
+    <!-- Bordo luminoso superiore -->
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5EF6FF" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#5EF6FF" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#5EF6FF" stop-opacity="0.04"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="18" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="squircle">
+      <rect x="100" y="100" width="824" height="824" rx="188" ry="188"/>
+    </clipPath>
+  </defs>
+
+  <!-- Corpo del riquadro (squircle macOS-like, con margine trasparente) -->
+  <rect x="100" y="100" width="824" height="824" rx="188" ry="188" fill="url(#bg)"/>
+
+  <!-- Reticolo sottile (come lo sfondo dell'app) -->
+  <g clip-path="url(#squircle)" stroke="#5EF6FF" stroke-opacity="0.06" stroke-width="1.5">
+    <g>
+      <line x1="164" y1="100" x2="164" y2="924"/>
+      <line x1="228" y1="100" x2="228" y2="924"/>
+      <line x1="292" y1="100" x2="292" y2="924"/>
+      <line x1="356" y1="100" x2="356" y2="924"/>
+      <line x1="420" y1="100" x2="420" y2="924"/>
+      <line x1="484" y1="100" x2="484" y2="924"/>
+      <line x1="548" y1="100" x2="548" y2="924"/>
+      <line x1="612" y1="100" x2="612" y2="924"/>
+      <line x1="676" y1="100" x2="676" y2="924"/>
+      <line x1="740" y1="100" x2="740" y2="924"/>
+      <line x1="804" y1="100" x2="804" y2="924"/>
+      <line x1="868" y1="100" x2="868" y2="924"/>
+    </g>
+    <g>
+      <line x1="100" y1="164" x2="924" y2="164"/>
+      <line x1="100" y1="228" x2="924" y2="228"/>
+      <line x1="100" y1="292" x2="924" y2="292"/>
+      <line x1="100" y1="356" x2="924" y2="356"/>
+      <line x1="100" y1="420" x2="924" y2="420"/>
+      <line x1="100" y1="484" x2="924" y2="484"/>
+      <line x1="100" y1="548" x2="924" y2="548"/>
+      <line x1="100" y1="612" x2="924" y2="612"/>
+      <line x1="100" y1="676" x2="924" y2="676"/>
+      <line x1="100" y1="740" x2="924" y2="740"/>
+      <line x1="100" y1="804" x2="924" y2="804"/>
+      <line x1="100" y1="868" x2="924" y2="868"/>
+    </g>
+  </g>
+
+  <!-- Alone dietro al marchio -->
+  <rect x="100" y="100" width="824" height="824" rx="188" ry="188" fill="url(#halo)"/>
+
+  <!-- Marchio "A" di Aether con punta-cursore da terminale -->
+  <g clip-path="url(#squircle)">
+    <g fill="none" stroke="url(#neon)" stroke-width="74" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+      <!-- asta sinistra -->
+      <path d="M512 322 L356 716"/>
+      <!-- asta destra -->
+      <path d="M512 322 L668 716"/>
+      <!-- traversa della A (anche riga di prompt del terminale) -->
+      <path d="M414 600 L556 600"/>
+    </g>
+    <!-- blocco cursore del terminale, in coda alla traversa -->
+    <rect x="566" y="566" width="68" height="68" rx="14" fill="#5BF08A" filter="url(#glow)"/>
+  </g>
+
+  <!-- Bordo interno luminoso -->
+  <rect x="101.5" y="101.5" width="821" height="821" rx="186.5" ry="186.5" fill="none" stroke="url(#rim)" stroke-width="3"/>
+</svg>

@@ -25,8 +25,10 @@
     "directories": {
       "buildResources": "build"
     },
+    "npmRebuild": false,
     "files": [
-      "out/**/*"
+      "!**/node_modules/cpu-features/**",
+      "!**/node_modules/nan/**"
     ],
     "mac": {
       "icon": "build/icon.icns",
@@ -36,6 +38,9 @@
       "icon": "build/icon.png"
     },
     "linux": {
+      "target": [
+        "AppImage"
+      ],
       "icon": "build/icon.png",
       "category": "Development"
     }

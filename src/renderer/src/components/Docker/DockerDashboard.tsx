@@ -257,7 +257,7 @@ export default function DockerDashboard({ connection }: { connection: Connection
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-line">
-              <table className="w-full border-collapse font-mono text-[12px]">
+              <table className="w-full select-text border-collapse font-mono text-[12px]">
                 <thead>
                   <tr className="bg-void/50 text-left text-ink-dim">
                     <th className="px-3 py-2 font-normal">container</th>

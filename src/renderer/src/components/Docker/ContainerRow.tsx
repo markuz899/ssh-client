@@ -49,24 +49,33 @@ export default function ContainerRow({
     onAction(action, container)
   }
 
+  // Non aprire l'ispettore se l'utente sta selezionando del testo nella riga.
+  const handleSelect = (): void => {
+    if (window.getSelection()?.toString()) return
+    onSelect()
+  }
+
   return (
     <motion.tr
       layout
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={onSelect}
+      onClick={handleSelect}
       className={`cursor-pointer border-t border-line transition-colors ${
         selected ? 'bg-phosphor/10' : 'hover:bg-elev/40'
       }`}
     >
-      {/* Nome + immagine */}
+      {/* Nome + immagine + id */}
       <td className="px-3 py-2">
         <div className="truncate font-medium text-ink" title={container.name}>
           {container.name}
         </div>
         <div className="truncate text-[10px] text-ink-faint" title={container.image}>
           {container.image}
+        </div>
+        <div className="truncate font-mono text-[10px] text-ink-faint" title={container.id}>
+          {container.id.slice(0, 12)}
         </div>
       </td>
 

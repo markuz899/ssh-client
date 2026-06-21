@@ -4,7 +4,10 @@ import {
   useSettings,
   ACCENT_PRESETS,
   BACKGROUNDS,
-  type BackgroundPreset
+  THEMES,
+  activeThemeId,
+  type BackgroundPreset,
+  type ThemePreset
 } from '../lib/settings'
 import { ACTIONS, eventToCombo, formatCombo, type ActionId, type ActionMeta } from '../lib/shortcuts'
 import AiSettingsSection from './Assistant/AiSettingsSection'
@@ -43,6 +46,15 @@ export default function SettingsPanel(): JSX.Element {
         </div>
 
         <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
+          {/* Tema completo */}
+          <Section title="tema">
+            <ThemePicker />
+            <p className="mt-2 font-mono text-[10px] leading-relaxed text-ink-faint">
+              Configurazioni pronte con toni più tenui per una lettura riposante.
+              Puoi comunque rifinire accento, testo e sfondo qui sotto.
+            </p>
+          </Section>
+
           {/* Accento */}
           <Section title="colore accento">
             <div className="flex flex-wrap items-center gap-2">
@@ -173,6 +185,69 @@ export default function SettingsPanel(): JSX.Element {
         </div>
       </motion.div>
     </motion.div>
+  )
+}
+
+function ThemePicker(): JSX.Element {
+  const s = useSettings()
+  const active = activeThemeId(s)
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {THEMES.map((t) => (
+        <ThemeCard key={t.id} theme={t} active={active === t.id} onSelect={() => s.selectTheme(t)} />
+      ))}
+    </div>
+  )
+}
+
+function ThemeCard({
+  theme,
+  active,
+  onSelect
+}: {
+  theme: ThemePreset
+  active: boolean
+  onSelect: () => void
+}): JSX.Element {
+  const bg = BACKGROUNDS[theme.background]
+  const rgb = (c: number[]): string => `rgb(${c.join(',')})`
+
+  return (
+    <button
+      onClick={onSelect}
+      title={theme.blurb}
+      className={`group rounded-lg border p-2 text-left transition ${
+        active ? 'border-phosphor/60 shadow-glow-sm' : 'border-line hover:border-phosphor/30'
+      }`}
+    >
+      {/* Anteprima della palette */}
+      <div
+        className="relative mb-2 h-12 w-full overflow-hidden rounded"
+        style={{ background: rgb(bg.void), boxShadow: `inset 0 0 0 1px ${rgb(bg.elev)}` }}
+      >
+        <div
+          className="absolute left-1.5 right-1.5 top-1.5 h-2 rounded-full"
+          style={{ background: theme.accent, boxShadow: `0 0 8px ${theme.accent}99` }}
+        />
+        <div
+          className="absolute bottom-2.5 left-1.5 h-1.5 w-8 rounded-full"
+          style={{ background: theme.ink }}
+        />
+        <div
+          className="absolute bottom-0.5 left-1.5 h-1 w-5 rounded-full"
+          style={{ background: theme.inkDim }}
+        />
+      </div>
+      <div className="flex items-center justify-between gap-1">
+        <span
+          className={`font-mono text-[11px] ${active ? 'text-phosphor' : 'text-ink-dim group-hover:text-ink'}`}
+        >
+          {theme.label}
+        </span>
+        {active && <span className="text-[10px] text-phosphor">●</span>}
+      </div>
+    </button>
   )
 }
 

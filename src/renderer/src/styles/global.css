@@ -21,6 +21,18 @@
   --c-line: rgb(var(--c-accent) / 0.1);
 }
 
+/* Tema chiaro: gli effetti pensati per lo sfondo nero (alone del testo,
+   scanline CRT) risultano invadenti su fondo chiaro, quindi li smorziamo. */
+.theme-light {
+  color-scheme: light;
+}
+.theme-light .text-glow {
+  text-shadow: none;
+}
+.theme-light .scanlines::after {
+  opacity: 0.12;
+}
+
 /* Quando le animazioni sono disattivate dalle Impostazioni. */
 .no-anim *,
 .no-anim *::before,
